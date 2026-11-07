@@ -1,0 +1,104 @@
+{
+  "routes": {
+    "minimum_prefix": {"4": 8, "6": 16}
+  },
+  "holders": {
+    "minimum_prefix": {"4": 8, "6": 16}
+  },
+  "whois": {
+    "whois_ripe_inetnum": "ripencc",
+    "whois_ripe_inet6num": "ripencc",
+    "whois_apnic_inetnum": "apnic",
+    "whois_apnic_inet6num": "apnic",
+    "whois_afrinic": "afrinic"
+  },
+  "organisations": ["whois_ripe_organisation", "whois_apnic_organisation", "whois_afrinic"],
+  "lacnic": "whois_lacnic",
+  "rir_names": {
+    "ripencc": "ripencc",
+    "ripe": "ripencc",
+    "arin": "arin",
+    "apnic": "apnic",
+    "lacnic": "lacnic",
+    "afrinic": "afrinic",
+    "jpnic": "apnic",
+    "krnic": "apnic",
+    "twnic": "apnic",
+    "cnnic": "apnic",
+    "idnic": "apnic",
+    "irinn": "apnic",
+    "vnnic": "apnic",
+    "nic-br": "lacnic",
+    "nic-mx": "lacnic"
+  },
+  "reserved": {
+    "registries": ["iana_special_v4", "iana_special_v6"],
+    "reachable_column": 8,
+    "unreachable": ["False", "N/A"],
+    "extra": ["224.0.0.0/4", "ff00::/8", "fec0::/10"]
+  },
+  "minimum_year": 1980,
+  "netnames": {
+    "cellular": ["gprs", "lte", "umts", "3g", "4g", "5g", "ggsn", "pgw", "apn", "mobile", "mobil",
+      "cellular", "gsm", "epc", "volte", "nbiot", "m2m", "iot"],
+    "residential": ["dsl", "adsl", "vdsl", "xdsl", "ftth", "fttb", "fttx", "fttc", "gpon", "pppoe",
+      "bras", "bng", "cable", "docsis", "cmts", "broadband", "residential", "dynamic", "dyn",
+      "dialup", "catv", "cgnat", "cgn", "subscribers", "fwa", "wimax", "wisp"],
+    "business": ["business", "corp", "corporate", "enterprise", "b2b", "biz", "sme", "soho"],
+    "hosting": ["hosting", "vps", "vds", "dedicated", "datacenter", "dc", "colo", "colocation",
+      "cloud", "servers", "server"]
+  },
+  "categories": {
+    "peeringdb": {
+      "Cable/DSL/ISP": "residential",
+      "NSP": "transit",
+      "Content": "content",
+      "Enterprise": "business",
+      "Educational/Research": "education",
+      "Non-Profit": "non-profit",
+      "Route Server": "infrastructure",
+      "Network Services": "infrastructure",
+      "Route Collector": "infrastructure",
+      "Government": "government"
+    },
+    "bgptools": {
+      "Eyeball": "residential",
+      "Content": "content",
+      "Carrier": "transit",
+      "T1": "transit"
+    },
+    "asrank_ixp": "exchange",
+    "strength": ["military", "government", "education", "exchange", "cdn", "hosting", "cellular",
+      "residential", "content", "transit", "business", "infrastructure", "non-profit"],
+    "covered_share": 0.5,
+    "domains": {
+      "military": "\\.mil(\\.[a-z]{2})?$",
+      "government": "\\.(gov|gob|gouv|govt|go|gv)(\\.[a-z]{2})?$",
+      "education": "\\.(edu|ac|edu\\.[a-z]{2}|ac\\.[a-z]{2})$"
+    },
+    "keywords": {
+      "education": ["university", "universidad", "universidade", "universite", "universitat",
+        "universita", "universiteit", "uniwersytet", "univerzita", "universitet",
+        "college", "polytechnic", "politecnico", "hochschule", "fachhochschule",
+        "institute of technology", "school district", "research and education network",
+        "academy of sciences", "akademia", "lyceum", "school"],
+      "government": ["ministry", "ministerio", "ministere", "ministerium", "ministero",
+        "ministerstvo", "government", "gobierno", "governo", "gouvernement",
+        "regierung", "municipality", "municipio", "prefeitura", "police", "policia",
+        "polizei", "parliament", "senate", "city of", "county of", "state of",
+        "department of", "federal", "bundesamt", "landesamt", "court", "tribunal",
+        "agency", "administration", "council"],
+      "military": ["army", "navy", "air force", "military", "defense", "defence", "armed forces",
+        "bundeswehr", "marines"]
+    },
+    "eyeball": {
+      "users": 1000,
+      "tier": 3,
+      "dominant_users": 1000000,
+      "category": "residential",
+      "mobile_category": "cellular",
+      "mobile_names": ["mobile", "mobil", "mobility", "mobiles", "cellular", "celular", "selular",
+        "gprs", "gsm", "umts", "lte", "movil", "moviles", "movel"]
+    }
+  }
+}

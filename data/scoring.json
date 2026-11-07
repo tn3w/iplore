@@ -1,0 +1,73 @@
+{
+  "threat_risk": {
+    "botnet": 0.9,
+    "malware": 0.85,
+    "phishing": 0.8,
+    "bruteforce": 0.65,
+    "web_attack": 0.6,
+    "abuse": 0.55,
+    "spam": 0.5,
+    "scanner": 0.3
+  },
+  "freshness": [
+    [1, 1.0],
+    [3, 1.0],
+    [7, 0.95],
+    [14, 0.9],
+    [30, 0.85],
+    [60, 0.75],
+    [90, 0.7],
+    [120, 0.65],
+    [180, 0.6],
+    [365, 0.5]
+  ],
+  "default_window": 30,
+  "quality": {"high": 1.0, "normal": 0.85, "low": 0.6, "minimal": 0.3},
+  "default_quality": "normal",
+  "service_risk": {
+    "tor_exit_node": 0.85,
+    "public_proxy": 0.75,
+    "residential_proxy": 0.7,
+    "anonymous_vpn": 0.5,
+    "private_relay": 0.15
+  },
+  "evidence_weight": {"published": 1.0, "measured": 1.0, "reported": 0.85, "inferred": 0.6},
+  "service_order": ["tor_exit_node", "residential_proxy", "public_proxy", "anonymous_vpn",
+    "private_relay"],
+  "trusted": {"damping": 0.25, "accepted_evidence": ["published", "measured"]},
+  "network": {"v6_unit_bits": 64, "minimum": 0.01},
+  "widest_feed_prefix": {"4": 8, "6": 16},
+  "risk_cap": 0.99,
+  "blocklist": {"minimum_risk": 0.4},
+  "inference": {
+    "evidence": "inferred",
+    "services": {
+      "anonymous_vpn": ["nordvpn", "expressvpn", "surfshark", "mullvad", "proton vpn", "protonvpn",
+        "private internet access", "cyberghost", "ipvanish", "purevpn", "windscribe",
+        "hide me", "hidemyass", "tunnelbear", "vyprvpn", "strongvpn", "torguard",
+        "ivpn limited", "airvpn", "azirevpn", "ovpn", "perfect privacy", "privado",
+        "privatevpn", "fastestvpn", "astrill", "hotspot shield", "zenmate",
+        "trust zone", "le vpn", "vpn unlimited", "keepsolid", "urban vpn",
+        "atlas vpn", "veepn", "betternet", "anchorfree", "pango", "x-vpn",
+        "mozilla vpn", "goose vpn", "cactusvpn", "safervpn", "ibvpn", "zoogvpn",
+        "hide my ip", "witopia", "vpn.ac", "packethub"],
+      "residential_proxy": ["bright data", "brightdata", "luminati", "oxylabs", "smartproxy", "decodo",
+        "iproyal", "netnut", "soax", "packetstream", "geosurf", "infatica",
+        "proxyrack", "rayobyte", "storm proxies", "honeygain", "peer2profit", "pawns",
+        "proxyempire", "webshare", "asocks", "proxy seller", "proxyseller",
+        "live proxies", "proxy-cheap", "shifter"]
+    },
+    "flags": {
+      "satellite": ["viasat", "hughes network", "hughesnet", "oneweb", "eutelsat", "inmarsat",
+        "iridium satellite", "kacific", "skylogic", "intelsat", "ses satellites", "o3b",
+        "telesat network", "telesat international", "speedcast", "marlink", "kvh industries",
+        "globalstar", "project kuiper", "avanti communications", "yahsat",
+        "thuraya telecommunications", "arabsat", "gilat satellite", "hispasat",
+        "sky perfect jsat", "kymeta"]
+    },
+    "flag_asns": {"satellite": [14593, 7155, 6621, 22351]}
+  },
+  "ipsum": {
+    "quality_by_count": [[1, 0.3], [3, 0.6], [5, 0.85], [8, 1.0]]
+  }
+}

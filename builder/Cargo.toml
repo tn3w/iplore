@@ -1,0 +1,19 @@
+[package]
+name = "builder"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bzip2 = "0.6.1"
+chrono = "0.4.45"
+flate2 = "1.1.11"
+liblzma = "0.4.9"
+maxminddb = "0.32.0"
+rayon = "1.12.0"
+reader = { version = "0.1.0", path = "../reader" }
+regex = "1.13.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tar = "0.4.46"
+ureq = "3.5.1"
+zip = "9.4.1"

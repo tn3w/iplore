@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260">
+  <rect width="900" height="260" rx="14" fill="#0d1117"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+    <g fill="#161b22" stroke="#21262d">
+      <rect x="560" y="24" width="316" height="212" rx="8"/>
+    </g>
+    <circle cx="580" cy="42" r="5" fill="#ff5f56"/>
+    <circle cx="598" cy="42" r="5" fill="#ffbd2e"/>
+    <circle cx="616" cy="42" r="5" fill="#27c93f"/>
+    <g font-size="12.5" fill="#8b949e">
+      <text x="578" y="76"><tspan fill="#3fb950">$</tspan> iplore full.ipl 1.1.1.1</text>
+      <text x="578" y="104" fill="#c9d1d9">{</text>
+      <text x="590" y="124"><tspan fill="#79c0ff">"country"</tspan>: <tspan fill="#a5d6ff">"AU"</tspan>,</text>
+      <text x="590" y="144"><tspan fill="#79c0ff">"asn"</tspan>: <tspan fill="#ffa657">13335</tspan>,</text>
+      <text x="590" y="164"><tspan fill="#79c0ff">"company"</tspan>: <tspan fill="#a5d6ff">"Cloudflare"</tspan>,</text>
+      <text x="590" y="184"><tspan fill="#79c0ff">"risk"</tspan>: <tspan fill="#ffa657">null</tspan></text>
+      <text x="578" y="204" fill="#c9d1d9">}</text>
+    </g>
+    <text x="48" y="128" font-size="72" font-weight="700" fill="#f0f6fc">ip<tspan fill="#58a6ff">lore</tspan></text>
+    <text x="52" y="168" font-size="17" fill="#8b949e">Where is this IP, who runs it,</text>
+    <text x="52" y="192" font-size="17" fill="#8b949e">what has it done? One offline file.</text>
+    <text x="52" y="226" font-size="13" fill="#3fb950">IPv4 · IPv6 · 19 MB · 7.8M lookups/s</text>
+  </g>
+</svg>

@@ -1,0 +1,474 @@
+iplore code: see repository license.
+
+Files built by iplore contain data from every source below; each keeps its own license.
+Redistributing a built file redistributes that data under those terms. Every file carries
+this list in its header ("sources").
+
+Required attributions
+  This product includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com.
+  IP address data powered by IPinfo (https://ipinfo.io).
+  IP Geolocation by DB-IP (https://db-ip.com).
+  GeoNames (https://www.geonames.org).
+  Made with Natural Earth.
+  CAIDA RouteViews Prefix-to-AS mappings, University of Oregon RouteViews Project.
+  CAIDA AS Organizations Dataset.
+  CAIDA AS Relationships Dataset.
+  CAIDA AS Rank.
+
+Sources (data/sources.json)
+  geolite2_city                            GeoLite2 EULA https://www.maxmind.com/en/geolite2/eula
+  ipinfo_lite                              CC-BY-SA-4.0 https://ipinfo.io/lite
+  dbip_city                                CC-BY-4.0 https://db-ip.com/db/lite.php
+  geonames_cities                          CC-BY-4.0 https://www.geonames.org/about.html
+  geonames_admin1                          CC-BY-4.0 https://www.geonames.org/about.html
+  geonames_admin2                          CC-BY-4.0 https://www.geonames.org/about.html
+  geonames_countries                       CC-BY-4.0 https://www.geonames.org/about.html
+  geonames_postal                          CC-BY-4.0 https://www.geonames.org/about.html
+  iso_3166_2                               LGPL-2.1 https://salsa.debian.org/iso-codes-team/iso-codes/-/blob/main/COPYING
+  naturalearth_admin1                      public domain https://www.naturalearthdata.com/about/terms-of-use/
+  iana_special_v4                          publisher terms https://www.iana.org/
+  iana_special_v6                          publisher terms https://www.iana.org/
+  pfx2as_v4                                CAIDA AUA https://www.caida.org/about/legal/aua/
+  pfx2as_v6                                CAIDA AUA https://www.caida.org/about/legal/aua/
+  iptoasn                                  PDDL-1.0 https://iptoasn.com/
+  vrps                                     publisher terms https://console.rpki-client.org/
+  nro_delegated                            publisher terms https://www.nro.net/
+  ripe_asnames                             RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
+  caida_as2org                             CAIDA AUA https://www.caida.org/about/legal/aua/
+  caida_asrel                              CAIDA AUA https://www.caida.org/about/legal/aua/
+  caida_asrank                             CAIDA AUA https://www.caida.org/about/legal/aua/
+  peeringdb_net                            PeeringDB AUP https://www.peeringdb.com/aup
+  peeringdb_org                            PeeringDB AUP https://www.peeringdb.com/aup
+  abuse_contacts                           MIT https://github.com/tn3w/asn-abuse/blob/master/LICENSE
+  bgptools_asns                            publisher terms https://bgp.tools/
+  apnic_aspop                              publisher terms https://stats.labs.apnic.net/aspop
+  mcc_mnc                                  MIT https://github.com/pbakondy/mcc-mnc-list/blob/master/LICENSE
+  mcc_mnc_table                            MIT https://github.com/WestComputing/mcc-mnc-table/blob/master/LICENSE
+  whois_ripe_inetnum                       RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
+  whois_ripe_inet6num                      RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
+  whois_ripe_organisation                  RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
+  whois_apnic_inetnum                      publisher terms https://www.apnic.net/
+  whois_apnic_inet6num                     publisher terms https://www.apnic.net/
+  whois_apnic_organisation                 publisher terms https://www.apnic.net/
+  whois_afrinic                            publisher terms https://afrinic.net/
+  whois_lacnic                             publisher terms https://www.lacnic.net/
+
+Feeds (data/feeds.json)
+  tag_mobile                               publisher terms https://bgp.tools/tags/mobile.txt
+  tag_dsl                                  publisher terms https://bgp.tools/tags/dsl.txt
+  tag_satnet                               publisher terms https://bgp.tools/tags/satnet.txt
+  tag_biznet                               publisher terms https://bgp.tools/tags/biznet.txt
+  tag_corp                                 publisher terms https://bgp.tools/tags/corp.txt
+  tag_uni                                  publisher terms https://bgp.tools/tags/uni.txt
+  tag_gov                                  publisher terms https://bgp.tools/tags/gov.txt
+  tag_cdn                                  publisher terms https://bgp.tools/tags/cdn.txt
+  tag_icrit                                publisher terms https://bgp.tools/tags/icrit.txt
+  tag_vpsh                                 publisher terms https://bgp.tools/tags/vpsh.txt
+  tag_perso                                publisher terms https://bgp.tools/tags/perso.txt
+  tag_c2s                                  publisher terms https://bgp.tools/tags/c2s.txt
+  spamhaus_asndrop                         Spamhaus DROP terms https://www.spamhaus.org/drop/
+  riskdb_asn_hosting                       BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_asn_vpn                           BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_asn_scanner                       BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_asn_education                     BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  zscaler                                  publisher terms https://config.zscaler.com/api/zscaler.net/cenr/json
+  cloudflare_v4                            publisher terms https://www.cloudflare.com/ips-v4/
+  cloudflare_v6                            publisher terms https://www.cloudflare.com/ips-v6/
+  fastly                                   publisher terms https://api.fastly.com/public-ip-list
+  cloudfront                               publisher terms https://d7uri8nf7uskq.cloudfront.net/tools/list-cloudfront-ips
+  bunny_cdn                                publisher terms https://api.bunny.net/system/edgeserverlist
+  cachefly                                 publisher terms https://cachefly.cachefly.net/ips/cdn.txt
+  gcore                                    publisher terms https://api.gcore.com/cdn/public-ip-list
+  imperva                                  publisher terms https://my.imperva.com/api/integration/v1/ips
+  google_services                          publisher terms https://www.gstatic.com/ipranges/goog.json
+  meta                                     CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  telegram                                 publisher terms https://core.telegram.org/resources/cidr.txt
+  twitter                                  CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  yandex                                   publisher terms https://yandex.com/ips
+  atlassian                                publisher terms https://ip-ranges.atlassian.com/
+  zoom                                     publisher terms https://assets.zoom.us/docs/ipranges/Zoom.txt
+  okta                                     publisher terms https://s3.amazonaws.com/okta-ip-ranges/ip_ranges.json
+  salesforce                               publisher terms https://ip-ranges.salesforce.com/ip-ranges.json
+  stripe_api                               publisher terms https://stripe.com/files/ips/ips_api.txt
+  stripe_webhooks                          publisher terms https://stripe.com/files/ips/ips_webhooks.txt
+  microsoft_365                            publisher terms https://endpoints.office.com/endpoints/worldwide?clientrequestid=b10c5ed1-bad1-445f-b386-b919946339a7
+  meta_v6                                  CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  twitter_v6                               CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  datadog                                  publisher terms https://ip-ranges.datadoghq.com/
+  auth0                                    publisher terms https://cdn.auth0.com/ip-ranges.json
+  stripe_armada                            publisher terms https://stripe.com/files/ips/ips_armada_gator.txt
+  paddle                                   publisher terms https://api.paddle.com/ips
+  quic_cloud                               publisher terms https://quic.cloud/ips?ln
+  keycdn                                   publisher terms https://www.keycdn.com/shield-prefixes.json
+  arvancloud                               publisher terms https://www.arvancloud.ir/en/ips.txt
+  checkpoint_sase                          Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  tor_onionoo                              CC-BY-3.0-US https://metrics.torproject.org/
+  tor_exits                                CC-BY-3.0-US https://metrics.torproject.org/
+  torguard                                 none declared https://github.com/sudesh0sudesh/TorGuardIPs
+  gluetun_torguard                         MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  protonvpn                                Apache-2.0 https://github.com/tn3w/ProtonVPN-IPs/blob/master/LICENSE
+  nordvpn                                  publisher terms https://api.nordvpn.com/v1/servers?limit=0
+  expressvpn                               none declared https://github.com/sudesh0sudesh/ExpressVPN-IPs
+  surfshark                                none declared https://github.com/sudesh0sudesh/surfshark-IPs
+  pia                                      publisher terms https://serverlist.piaservers.net/vpninfo/servers/v6
+  mullvad                                  publisher terms https://api.mullvad.net/www/relays/all
+  ivpn                                     publisher terms https://api.ivpn.net/v5/servers.json
+  ovpn                                     publisher terms https://www.ovpn.com/v2/api/client/entry
+  airvpn                                   publisher terms https://airvpn.org/api/status/
+  windscribe                               Apache-2.0 https://github.com/tn3w/Windscribe-IPs/blob/master/LICENSE
+  tunnelbear                               Apache-2.0 https://github.com/tn3w/TunnelBear-IPs/blob/master/LICENSE
+  cyberghost                               none declared https://github.com/sudesh0sudesh/PIA-IPs
+  astrill                                  publisher terms https://storage.googleapis.com/spur-astrill-vpn/ips.txt
+  riseup                                   publisher terms https://api.black.riseup.net/3/config/eip-service.json
+  surfshark_servers                        publisher terms https://api.surfshark.com/v4/server/clusters/all
+  hideme_servers                           publisher terms https://api.hide.me/v1/network/paid/en
+  azirevpn_servers                         publisher terms https://api.azirevpn.com/v3/locations
+  gluetun_cyberghost                       MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_expressvpn                       MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_fastestvpn                       MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_giganews                         MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_hidemyass                        MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_ipvanish                         MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_privado                          MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_privatevpn                       MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_purevpn                          MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_slickvpn                         MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_surfshark                        MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_vpn_unlimited                    MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_vpnsecure                        MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_vyprvpn                          MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  gluetun_windscribe                       MIT https://github.com/qdm12/gluetun-servers/blob/main/LICENSE
+  x4bnet_vpn                               none declared https://github.com/X4BNet/lists_vpn
+  riskdb_net_vpn                           BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  hola                                     GPL-3.0 https://github.com/az0/vpn_ip/blob/main/LICENSE
+  shadowwhisperer_vpn                      Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  riskdb_ip_vpn                            BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  abuseipdb_3d                             none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_14d                            none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_90d                            none declared https://github.com/borestad/blocklist-abuseipdb
+  feodotracker                             CC0-1.0 https://abuse.ch/terms-of-use/
+  threatfox                                CC0-1.0 https://abuse.ch/terms-of-use/
+  urlhaus                                  CC0-1.0 https://abuse.ch/terms-of-use/
+  drb_ra_c2                                custom https://github.com/drb-ra/C2IntelFeeds/blob/master/License.md
+  phishing_active                          MIT https://github.com/Phishing-Database/Phishing.Database/blob/master/LICENSE
+  emerging_compromised                     publisher terms https://rules.emergingthreats.net/blockrules/compromised-ips.txt
+  cinsscore                                publisher terms https://cinsscore.com/list/ci-badguys.txt
+  alienvault                               publisher terms https://reputation.alienvault.com/reputation.generic
+  blocklist_de_all                         publisher terms https://lists.blocklist.de/lists/all.txt
+  blocklist_de_bots                        publisher terms https://lists.blocklist.de/lists/bots.txt
+  dshield                                  publisher terms https://www.dshield.org/block.txt
+  greensnow                                publisher terms https://blocklist.greensnow.co/greensnow.txt
+  binary_defense                           publisher terms https://www.binarydefense.com/banlist.txt
+  turris_greylist                          publisher terms https://view.sentinel.turris.cz/greylist-data/greylist-latest.csv
+  botvrij                                  publisher terms https://www.botvrij.eu/data/ioclist.ip-dst.raw
+  stopforumspam                            publisher terms https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt
+  sblam                                    per original list https://github.com/firehol/blocklist-ipsets
+  threatview                               publisher terms https://threatview.io/Downloads/IP-High-Confidence-Feed.txt
+  interserver                              publisher terms https://sigs.interserver.net/ipslim.txt
+  datashield                               GPL-3.0 https://github.com/duggytuxy/Data-Shield_IPv4_Blocklist/blob/main/LICENSE
+  ipthreat                                 publisher terms https://lists.ipthreat.net/file/ipthreat-lists/threat/threat-50.txt.gz
+  isc_top                                  publisher terms https://isc.sans.edu/api/sources/attacks/5000/?json
+  tweetfeed                                publisher terms https://api.tweetfeed.live/v1/month/ip
+  honeypot_harvesters                      per original list https://github.com/firehol/blocklist-ipsets
+  honeypot_spammers                        per original list https://github.com/firehol/blocklist-ipsets
+  honeypot_commenters                      per original list https://github.com/firehol/blocklist-ipsets
+  honeypot_dictionary                      per original list https://github.com/firehol/blocklist-ipsets
+  botscout                                 per original list https://github.com/firehol/blocklist-ipsets
+  gpf_comics                               per original list https://github.com/firehol/blocklist-ipsets
+  myip_bots                                per original list https://github.com/firehol/blocklist-ipsets
+  stopforumspam_7d                         per original list https://github.com/firehol/blocklist-ipsets
+  voipbl                                   publisher terms https://www.voipbl.org/update/
+  maltrail_scanner                         MIT https://github.com/stamparm/maltrail/blob/master/LICENSE
+  maltrail_scanner_cidr                    MIT https://github.com/stamparm/maltrail/blob/master/LICENSE
+  censys_scanner                           none declared https://github.com/borestad/blocklist-abuseipdb
+  sonar_scanner                            none declared https://github.com/borestad/blocklist-abuseipdb
+  palo_scanner                             none declared https://github.com/borestad/blocklist-abuseipdb
+  modat_scanner                            publisher terms https://scanner.modat.io/ipv4.txt
+  abuseipdb_1d                             none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_7d                             none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_30d                            none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_60d                            none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_120d                           none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_180d                           none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_365d                           none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_subnets_50                     none declared https://github.com/borestad/blocklist-abuseipdb
+  abuseipdb_subnets_25                     none declared https://github.com/borestad/blocklist-abuseipdb
+  blocklist_de_ssh                         publisher terms https://lists.blocklist.de/lists/ssh.txt
+  blocklist_de_mail                        publisher terms https://lists.blocklist.de/lists/mail.txt
+  blocklist_de_apache                      publisher terms https://lists.blocklist.de/lists/apache.txt
+  blocklist_de_bruteforce                  publisher terms https://lists.blocklist.de/lists/bruteforcelogin.txt
+  blocklist_de_strong                      publisher terms https://lists.blocklist.de/lists/strongips.txt
+  dataplane_sshclient                      publisher terms https://dataplane.org/sshclient.txt
+  dataplane_sshpwauth                      publisher terms https://dataplane.org/sshpwauth.txt
+  dataplane_telnetlogin                    publisher terms https://dataplane.org/telnetlogin.txt
+  dataplane_vncrfb                         publisher terms https://dataplane.org/vncrfb.txt
+  dataplane_sipquery                       publisher terms https://dataplane.org/sipquery.txt
+  dataplane_smtpgreet                      publisher terms https://dataplane.org/smtpgreet.txt
+  dataplane_dnsrd                          publisher terms https://dataplane.org/dnsrd.txt
+  blocklist_net_ua                         per original list https://github.com/firehol/blocklist-ipsets
+  feodotracker_aggressive                  CC0-1.0 https://abuse.ch/terms-of-use/
+  cybercrime_tracker                       per original list https://github.com/firehol/blocklist-ipsets
+  stopforumspam_365                        publisher terms https://www.stopforumspam.com/downloads/listed_ip_365.zip
+  etnetera_aggressive                      publisher terms https://security.etnetera.cz/feeds/etn_aggressive.txt
+  cleantalk_updated                        per original list https://iplists.firehol.org/
+  cleantalk_top20                          per original list https://iplists.firehol.org/
+  nixspam                                  per original list https://iplists.firehol.org/
+  et_botcc                                 per original list https://iplists.firehol.org/
+  blocklist_de_ftp                         publisher terms https://lists.blocklist.de/lists/ftp.txt
+  blocklist_de_imap                        publisher terms https://lists.blocklist.de/lists/imap.txt
+  blocklist_de_sip                         publisher terms https://lists.blocklist.de/lists/sip.txt
+  riskdb_ip_scanner                        BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_net_scanner                       BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_ip_hacked                         BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  threatfox_ips                            BSD-3-Clause https://github.com/elliotwutingfeng/ThreatFox-IOC-IPs/blob/main/LICENSE
+  hagezi_tif                               GPL-3.0 https://github.com/hagezi/dns-blocklists/blob/main/LICENSE
+  cps_cobaltstrike                         MIT https://github.com/CriticalPathSecurity/Public-Intelligence-Feeds/blob/master/LICENSE
+  sefinek                                  MIT https://github.com/sefinek/Malicious-IP-Addresses/blob/main/LICENSE
+  isc_research                             publisher terms https://isc.sans.edu/api/threatcategory/research?json
+  shadowwhisperer_scanners                 Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  shadowwhisperer_probes                   Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  shadowwhisperer_botnet                   Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  shadowwhisperer_dropper                  Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  shadowwhisperer_recon                    Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  shadowwhisperer_intrusion                Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  shadowwhisperer_abuse                    Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  aws                                      publisher terms https://ip-ranges.amazonaws.com/ip-ranges.json
+  gcp                                      publisher terms https://www.gstatic.com/ipranges/cloud.json
+  azure_v4                                 CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  azure_v6                                 CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  oracle_cloud                             publisher terms https://docs.oracle.com/en-us/iaas/tools/public_ip_ranges.json
+  ibm_cloud                                Apache-2.0 https://github.com/dprosper/cidr-calculator/blob/main/LICENSE
+  linode_v4                                CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  vultr_v4                                 CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  github                                   publisher terms https://api.github.com/meta
+  x4bnet_datacenter                        none declared https://github.com/X4BNet/lists_vpn
+  riskdb_net_hosting                       BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  firehol_datacenters                      per original list https://iplists.firehol.org/
+  jhassine_datacenters                     none declared https://github.com/jhassine/server-ip-addresses
+  linode_v6                                CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  vultr_v6                                 CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  googlebot                                publisher terms https://developers.google.com/static/crawling/ipranges/common-crawlers.json
+  google_special_crawlers                  publisher terms https://developers.google.com/static/crawling/ipranges/special-crawlers.json
+  bingbot                                  publisher terms https://www.bing.com/toolbox/bingbot.json
+  applebot                                 publisher terms https://search.developer.apple.com/applebot.json
+  duckduckbot                              publisher terms https://duckduckgo.com/duckduckbot.json
+  openai_gptbot                            publisher terms https://openai.com/gptbot.json
+  openai_searchbot                         publisher terms https://openai.com/searchbot.json
+  perplexity_bot                           publisher terms https://www.perplexity.com/perplexitybot.json
+  ahrefs                                   publisher terms https://api.ahrefs.com/v3/public/crawler-ip-ranges
+  google_fetchers                          publisher terms https://developers.google.com/static/crawling/ipranges/user-triggered-fetchers.json
+  google_fetchers_own                      publisher terms https://developers.google.com/static/crawling/ipranges/user-triggered-fetchers-google.json
+  openai_chatgpt_user                      publisher terms https://openai.com/chatgpt-user.json
+  duckassistbot                            CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE
+  perplexity_user                          publisher terms https://www.perplexity.com/perplexity-user.json
+  kagibot                                  publisher terms https://kagi.com/bot
+  ccbot                                    publisher terms https://index.commoncrawl.org/ccbot.json
+  mistral_user                             publisher terms https://mistral.ai/mistralai-user-ips.json
+  claudebot                                publisher terms https://claude.com/crawling/bots.json
+  anthropic                                publisher terms https://platform.claude.com/docs/en/api/ip-addresses
+  ipcat_datacenters                        MIT https://github.com/growlfm/ipcat/blob/main/LICENSE
+  amazonbot                                publisher terms https://developer.amazon.com/amazonbot/ip-addresses/
+  ipsum                                    Unlicense https://github.com/stamparm/ipsum/blob/master/LICENSE
+  starlink_geofeed                         publisher terms https://geoip.starlinkisp.net/feed.csv
+  apple_relay                              publisher terms https://mask-api.icloud.com/egress-ip-ranges.csv
+  cloudflare_warp                          publisher terms https://api.cloudflare.com/warp-egress-ip-ranges.csv
+  digitalocean                             publisher terms https://digitalocean.com/geo/google.csv
+  exoscale                                 publisher terms https://exoscale-prefixes.sos.exo.io/exoscale_geofeed
+  hostinger                                none declared https://github.com/hostinger/geofeed
+  upcloud                                  publisher terms https://upcloud.com/geofeed.csv
+  equinix_metal                            publisher terms https://geofeed.equinixmetal.com/
+  cherryservers                            publisher terms https://geofeed.cherryservers.com/geofeed.csv
+  linode_geofeed                           publisher terms https://geoip.linode.com/
+  vultr_geofeed                            publisher terms https://geofeed.constant.com/
+  aws_geofeed                              publisher terms https://ip-ranges.amazonaws.com/geo-ip-feed.csv
+  gcp_geofeed                              publisher terms https://www.gstatic.com/ipranges/cloud_geofeed
+  google_corp_geofeed                      publisher terms https://www.gstatic.com/geofeed/corp_external
+  google_vpn                               publisher terms https://www.gstatic.com/vpn/geofeed
+  microsoft_geofeed                        publisher terms https://download.microsoft.com/download/0b9dc6ca-68f9-43b2-b094-da4f6d509bc3/geoloc-Microsoft.csv
+  cloudflare_egress                        publisher terms https://api.cloudflare.com/local-ip-ranges.csv
+  netflix_geofeed                          none declared https://github.com/Netflix/nflx-geofeed
+  ntt_geofeed                              none declared https://github.com/nttgin/geofeeds
+  verizon_geofeed                          custom https://github.com/Verizon/verizon-geofeed/blob/main/LICENSE.txt
+  tmobile_us_geofeed                       Apache-2.0 https://github.com/tmobile/tmus-geofeed/blob/main/LICENSE
+  airnity_geofeed                          MIT https://github.com/airnity/geofeed
+  clouvider_geofeed                        publisher terms https://clouvider.com/geoipfeed.csv
+  civo_geofeed                             none declared https://github.com/civo/geofeed
+  stackit_geofeed                          custom https://github.com/SchwarzIT/geofeeds/blob/main/LICENSE.md
+  peeringdb_ixpfx                          publisher terms https://www.peeringdb.com/api/ixpfx
+  spamhaus_drop                            Spamhaus DROP terms https://www.spamhaus.org/drop/
+  spamhaus_dropv6                          Spamhaus DROP terms https://www.spamhaus.org/drop/
+  anycatch_v4                              none declared https://github.com/bgptools/anycast-prefixes
+  anycatch_v6                              none declared https://github.com/bgptools/anycast-prefixes
+  google_public_dns                        publisher terms https://www.gstatic.com/ipranges/publicdns.json
+  proxifly                                 GPL-3.0 https://github.com/proxifly/free-proxy-list/blob/main/LICENSE
+  monosans_http                            MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
+  monosans_socks5                          MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
+  thespeedx                                none declared https://github.com/TheSpeedX/PROXY-List
+  firehol_proxies                          per original list https://iplists.firehol.org/
+  thespeedx_http                           none declared https://github.com/TheSpeedX/PROXY-List
+  thespeedx_socks4                         none declared https://github.com/TheSpeedX/PROXY-List
+  monosans_socks4                          MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
+  hideip_me                                none declared https://github.com/zloi-user/hideip.me
+  proxyscrape                              publisher terms https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text
+  socks_proxy                              per original list https://iplists.firehol.org/
+  sslproxies                               per original list https://iplists.firehol.org/
+  vakhov_proxy                             MIT https://github.com/vakhov/fresh-proxy-list/blob/master/LICENSE
+  mmpx12_proxy                             none declared https://github.com/mmpx12/proxy-list
+  iplocate_proxies                         MIT https://github.com/iplocate/free-proxy-list/blob/main/LICENSE
+  hookzof_socks5                           none declared https://github.com/hookzof/socks5_list
+  vpngate                                  publisher terms https://www.vpngate.net/api/iphone/
+  clarketm_proxy                           MIT https://github.com/clarketm/proxy-list/blob/master/LICENSE
+  shiftytr_proxy                           none declared https://github.com/ShiftyTR/Proxy-List
+  roosterkid_https                         none declared https://github.com/roosterkid/openproxylist
+  roosterkid_socks4                        none declared https://github.com/roosterkid/openproxylist
+  jetkai_http                              MIT https://github.com/jetkai/proxy-list/blob/main/LICENSE
+  jetkai_socks5                            MIT https://github.com/jetkai/proxy-list/blob/main/LICENSE
+  sunny9577_proxy                          publisher terms https://sunny9577.github.io/proxy-scraper/proxies.txt
+  r00tee_https                             none declared https://github.com/r00tee/Proxy-List
+  r00tee_socks5                            none declared https://github.com/r00tee/Proxy-List
+  dpangestuw_http                          none declared https://github.com/dpangestuw/Free-Proxy
+  dpangestuw_socks5                        none declared https://github.com/dpangestuw/Free-Proxy
+  proxyscrape_http                         publisher terms https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all
+  zaeem20_http                             MIT https://github.com/Zaeem20/FREE_PROXIES_LIST/blob/master/LICENSE
+  vmheaven_http                            none declared https://github.com/vmheaven/VMHeaven-Free-Proxy-Updated
+  normshield_wannacry                      per original list https://iplists.firehol.org/
+  uptimerobot                              publisher terms https://uptimerobot.com/inc/files/ips/IPv4andIPv6.txt
+  pingdom                                  publisher terms https://my.pingdom.com/probes/ipv4
+  statuscake                               publisher terms https://app.statuscake.com/Workfloor/Locations.php?format=txt
+  mojeekbot                                publisher terms https://www.mojeek.com/mojeekbot.json
+  akamai_ranges                            CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  alibaba_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  backblaze_ranges                         CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  baidu_ranges                             CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  circleci_ranges                          CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  contabo_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  discord_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  gabia_ranges                             CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  gocache_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  hetzner_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  hostway_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  huawei_ranges                            CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  internetarchive_ranges                   CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  leaseweb_ranges                          CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  nhncloud_ranges                          CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  ovhcloud_ranges                          CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  play2go_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  rackspace_ranges                         CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  scaleway_ranges                          CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  stormwall_ranges                         CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  sucuri_ranges                            CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  tencent_ranges                           CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  teamcity_ranges                          CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  wasabi_ranges                            CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  zoho_ranges                              CC0-1.0 https://github.com/rezmoss/cloud-provider-ip-addresses/blob/main/LICENSE
+  shodan_scanner                           per original list https://github.com/MISP/misp-warninglists
+  shadowserver_scanner                     per original list https://github.com/MISP/misp-warninglists
+  binaryedge_scanner                       per original list https://github.com/MISP/misp-warninglists
+  rapid7_scanner                           per original list https://github.com/MISP/misp-warninglists
+  onyphe_scanner                           per original list https://github.com/MISP/misp-warninglists
+  criminalip_scanner                       per original list https://github.com/MISP/misp-warninglists
+  netlas_scanner                           per original list https://github.com/MISP/misp-warninglists
+  leakix_scanner                           per original list https://github.com/MISP/misp-warninglists
+  zoomeye_scanner                          per original list https://github.com/MISP/misp-warninglists
+  fofa_scanner                             per original list https://github.com/MISP/misp-warninglists
+  quake_scanner                            per original list https://github.com/MISP/misp-warninglists
+  hunter_scanner                           per original list https://github.com/MISP/misp-warninglists
+  driftnet_scanner                         per original list https://github.com/MISP/misp-warninglists
+  stretchoid_scanner                       per original list https://github.com/MISP/misp-warninglists
+  internet_census_scanner                  per original list https://github.com/MISP/misp-warninglists
+  recordedfuture_scanner                   per original list https://github.com/MISP/misp-warninglists
+  tenableasm_scanner                       per original list https://github.com/MISP/misp-warninglists
+  bitsight_scanner                         per original list https://github.com/MISP/misp-warninglists
+  netscout_scanner                         per original list https://github.com/MISP/misp-warninglists
+  cybergreen_scanner                       per original list https://github.com/MISP/misp-warninglists
+  ipinfo_scanner                           per original list https://github.com/MISP/misp-warninglists
+  intruder_scanner                         per original list https://github.com/MISP/misp-warninglists
+  detectify_scanner                        per original list https://github.com/MISP/misp-warninglists
+  alphastrike_scanner                      per original list https://github.com/MISP/misp-warninglists
+  internettl_scanner                       per original list https://github.com/MISP/misp-warninglists
+  a10networks_scanner                      per original list https://github.com/MISP/misp-warninglists
+  academyforinternetresearch_scanner       per original list https://github.com/MISP/misp-warninglists
+  palo_alto_networks_cortex_xpanse_scanner per original list https://github.com/MISP/misp-warninglists
+  mandiantasm_scanner                      per original list https://github.com/MISP/misp-warninglists
+  crowdstrikefalconsurface_scanner         per original list https://github.com/MISP/misp-warninglists
+  umich_cse_connection_attempts_scanner    per original list https://github.com/MISP/misp-warninglists
+  dataplane_scanner                        per original list https://github.com/MISP/misp-warninglists
+  researchscanner_scanner                  per original list https://github.com/MISP/misp-warninglists
+  shadowforce_scanner                      per original list https://github.com/MISP/misp-warninglists
+  internetmeasurementresearch_scanner      per original list https://github.com/MISP/misp-warninglists
+  securityresearch_scanner                 per original list https://github.com/MISP/misp-warninglists
+  onlyscans_scanner                        per original list https://github.com/MISP/misp-warninglists
+  probethenet_scanner                      per original list https://github.com/MISP/misp-warninglists
+  xmco_scanner                             per original list https://github.com/MISP/misp-warninglists
+  zern_scanner                             per original list https://github.com/MISP/misp-warninglists
+  odin_scanner                             per original list https://github.com/MISP/misp-warninglists
+  edgewatch_scanner                        per original list https://github.com/MISP/misp-warninglists
+  knoq_scanner                             per original list https://github.com/MISP/misp-warninglists
+  ki3_scanner                              per original list https://github.com/MISP/misp-warninglists
+  hackertarget_scanner                     per original list https://github.com/MISP/misp-warninglists
+  hadrian_scanner                          per original list https://github.com/MISP/misp-warninglists
+  infrawatch_scanner                       per original list https://github.com/MISP/misp-warninglists
+  netsecscan_scanner                       per original list https://github.com/MISP/misp-warninglists
+  visionheight_scanner                     per original list https://github.com/MISP/misp-warninglists
+  cyberok_scanner                          per original list https://github.com/MISP/misp-warninglists
+  cypex_scanner                            per original list https://github.com/MISP/misp-warninglists
+  groupib_scanner                          per original list https://github.com/MISP/misp-warninglists
+  eset_scanner                             per original list https://github.com/MISP/misp-warninglists
+  cybcube_scanner                          per original list https://github.com/MISP/misp-warninglists
+  intrinsec_scanner                        per original list https://github.com/MISP/misp-warninglists
+  pocnroll_scanner                         per original list https://github.com/MISP/misp-warninglists
+  recyber_scanner                          per original list https://github.com/MISP/misp-warninglists
+  rootevidence_scanner                     per original list https://github.com/MISP/misp-warninglists
+  deepfield_scanner                        per original list https://github.com/MISP/misp-warninglists
+  coalition_signals_intelligence_scanner   per original list https://github.com/MISP/misp-warninglists
+  cyberresilience_scanner                  per original list https://github.com/MISP/misp-warninglists
+  internetresearchproject_scanner          per original list https://github.com/MISP/misp-warninglists
+  internetcleanup_scanner                  per original list https://github.com/MISP/misp-warninglists
+  circl_security_scanner                   per original list https://github.com/MISP/misp-warninglists
+  circl_ssh_scanner                        per original list https://github.com/MISP/misp-warninglists
+  bufferoverrun_scanner                    per original list https://github.com/MISP/misp-warninglists
+  alphastrike_research_scanner             per original list https://github.com/MISP/misp-warninglists
+  cdn77                                    per original list https://github.com/MISP/misp-warninglists
+  coreweave                                per original list https://github.com/MISP/misp-warninglists
+  godaddy                                  per original list https://github.com/MISP/misp-warninglists
+  wikimedia                                per original list https://github.com/MISP/misp-warninglists
+  tenable_cloud_ipv4                       per original list https://github.com/MISP/misp-warninglists
+  palo_alto_networks_cortex_cloud          per original list https://github.com/MISP/misp-warninglists
+  microsoft_azure_china                    per original list https://github.com/MISP/misp-warninglists
+  microsoft_azure_us_gov                   per original list https://github.com/MISP/misp-warninglists
+  check_host_net                           per original list https://github.com/MISP/misp-warninglists
+  datacenter_v4                            per original list https://github.com/MISP/misp-warninglists
+  datacenter_v6                            per original list https://github.com/MISP/misp-warninglists
+  is_vpn_v4                                MIT https://github.com/josephrocca/is-vpn/blob/main/LICENSE
+  is_vpn_v6                                MIT https://github.com/josephrocca/is-vpn/blob/main/LICENSE
+  betteruptimebot                          none declared https://github.com/AnTheMaker/GoodBots
+  freshpingbot                             none declared https://github.com/AnTheMaker/GoodBots
+  marginalia                               none declared https://github.com/AnTheMaker/GoodBots
+  webpagetestbot                           none declared https://github.com/AnTheMaker/GoodBots
+  imagekit                                 none declared https://github.com/AnTheMaker/GoodBots
+  imgix                                    none declared https://github.com/AnTheMaker/GoodBots
+  molliewebhook                            none declared https://github.com/AnTheMaker/GoodBots
+  rssapi                                   none declared https://github.com/AnTheMaker/GoodBots
+  x4bnet_vpn_v6                            none declared https://github.com/X4BNet/lists_vpn
+  x4bnet_datacenter_v6                     none declared https://github.com/X4BNet/lists_vpn
+  riskdb_asn_crawler                       BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_asn_isp                           BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_net_crawler                       BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  riskdb_net_education                     BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
+  brianhama_bad_asn                        MIT https://github.com/brianhama/bad-asn-list/blob/master/LICENSE
+  emerging_block                           publisher terms https://rules.emergingthreats.net/fwrules/emerging-Block-IPs.txt
+  bruteforceblocker                        per original list https://iplists.firehol.org/
+  stopforumspam_30d_list                   per original list https://iplists.firehol.org/
+  interserver_iprbl                        publisher terms https://sigs.interserver.net/iprbl.txt
+  myipms_blacklist                         publisher terms https://myip.ms/files/blacklist/general/latest_blacklist.txt
+  dataplane_sipinvitation                  publisher terms https://dataplane.org/sipinvitation.txt
+  dataplane_sipregistration                publisher terms https://dataplane.org/sipregistration.txt
+  dataplane_smtpdata                       publisher terms https://dataplane.org/smtpdata.txt
+  dataplane_dnsrdany                       publisher terms https://dataplane.org/dnsrdany.txt
+  dataplane_dnsversion                     publisher terms https://dataplane.org/dnsversion.txt
+  censys_misp_scanner                      per original list https://github.com/MISP/misp-warninglists
+  modat_misp_scanner                       per original list https://github.com/MISP/misp-warninglists
+
+Embedded
+  US DMA labels (data/place.json metros)  none declared https://github.com/simzou/nielsen-dma
+  Operator geofeeds found in RIR whois objects  each publisher's terms, URL in the object

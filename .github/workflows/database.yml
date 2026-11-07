@@ -1,0 +1,76 @@
+name: database
+
+on:
+  schedule:
+    - cron: "0 5 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: database
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  KEEP_RELEASES: 3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
+      IPINFO_TOKEN: ${{ secrets.IPINFO_TOKEN }}
+      ABUSECH_AUTH_KEY: ${{ secrets.ABUSECH_AUTH_KEY }}
+      BGPTOOLS_USER_AGENT: ${{ secrets.BGPTOOLS_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - run: cargo build --release --locked
+
+      - name: Fetch sources
+        run: target/release/builder fetch
+
+      - name: Build databases
+        run: |
+          target/release/builder full place network place.country.code \
+            abuse.service+abuse.provider+abuse.risk abuse.service \
+            network.asn+network.operator.category+abuse.user_type blocklist
+
+      - name: Name release assets
+        run: |
+          mkdir release
+          cd dist
+          cp iplore-full.ipl iplore-place.ipl iplore-network.ipl blocklist.netset \
+            ../release/
+          cp iplore-place.country.code.ipl ../release/iplore-country.ipl
+          cp iplore-abuse.service+abuse.provider+abuse.risk.ipl \
+            ../release/iplore-abuse.ipl
+          cp iplore-abuse.service.ipl ../release/iplore-anonymizer.ipl
+          cp iplore-network.asn+network.operator.category+abuse.user_type.ipl \
+            ../release/iplore-traffic.ipl
+
+      - name: Check union property
+        run: |
+          target/release/builder check release/iplore-full.ipl release/iplore-place.ipl
+          target/release/builder check release/iplore-full.ipl \
+            release/iplore-network.ipl
+          target/release/iplore release/iplore-full.ipl 1.1.1.1
+
+      - name: Publish release
+        run: |
+          tag="db-$(date -u +%F-%H%M)"
+          gh release create "$tag" --latest --title "Database $(date -u +%F)" \
+            --notes "Weekly build. Sources and licenses are listed in each file header." \
+            release/*
+
+      - name: Delete old builds
+        run: |
+          gh release list --limit 200 --json tagName \
+            --jq '[.[].tagName | select(startswith("db-"))] | sort | reverse
+              | .[env.KEEP_RELEASES | tonumber:] | .[]' \
+            | while read -r tag; do
+              gh release delete "$tag" --cleanup-tag --yes
+            done

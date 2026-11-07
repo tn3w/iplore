@@ -1,0 +1,112 @@
+{
+  "vocabularies": {
+    "evidence": ["published", "measured", "reported", "inferred"],
+    "threat": ["botnet", "malware", "phishing", "bruteforce", "web_attack", "abuse", "spam",
+      "scanner"],
+    "service": ["tor_exit_node", "private_relay", "anonymous_vpn", "residential_proxy",
+      "public_proxy"],
+    "category": ["residential", "cellular", "business", "hosting", "cdn", "content", "transit",
+      "exchange", "infrastructure", "education", "government", "military",
+      "non-profit", "search_engine_spider"],
+    "rpki": ["unknown", "valid", "invalid"],
+    "rir": ["afrinic", "apnic", "arin", "lacnic", "ripencc"],
+    "flag": ["anycast", "satellite"]
+  },
+  "tables": {
+    "spine": {
+      "place": {"link": "place"},
+      "network": {"link": "network"},
+      "abuse": {"link": "abuse"},
+      "network.prefix": {"kind": "int"},
+      "network.rir": {"vocab": "rir"},
+      "network.country": {"kind": "string"},
+      "network.year": {"kind": "int"},
+      "network.rpki": {"vocab": "rpki"}
+    },
+    "hosts": {
+      "abuse": {"link": "abuse"}
+    },
+    "place": {
+      "lat": {"kind": "signed", "scale": 10000},
+      "lon": {"kind": "signed", "scale": 10000},
+      "accuracy": {"kind": "int"},
+      "confidence": {"kind": "int"},
+      "city": {"link": "city"},
+      "region": {"link": "region"},
+      "country": {"link": "country"}
+    },
+    "city": {
+      "name": {"kind": "string"},
+      "geonames_id": {"kind": "int"},
+      "population": {"kind": "int"},
+      "district": {"kind": "string"},
+      "postal": {"kind": "string"},
+      "metro": {"kind": "string"},
+      "timezone": {"kind": "string"}
+    },
+    "region": {
+      "name": {"kind": "string"},
+      "iso": {"kind": "string"},
+      "geonames_id": {"kind": "int"}
+    },
+    "country": {
+      "code": {"kind": "string"},
+      "name": {"kind": "string"},
+      "continent": {"kind": "string"},
+      "currency": {"kind": "string"},
+      "calling_code": {"kind": "string"},
+      "languages": {"kind": "string"},
+      "eu": {"kind": "bool"}
+    },
+    "network": {
+      "asn": {"kind": "int"},
+      "handle": {"kind": "string"},
+      "users": {"kind": "int"},
+      "mobile_code": {"kind": "string"},
+      "risk": {"kind": "int", "scale": 100},
+      "operator": {"link": "operator"}
+    },
+    "operator": {
+      "company": {"kind": "string"},
+      "category": {"vocab": "category"},
+      "website": {"kind": "string"},
+      "address": {"kind": "string"},
+      "country": {"kind": "string"},
+      "abuse_email": {"kind": "string"},
+      "since": {"kind": "int"},
+      "tier": {"kind": "int"},
+      "cone": {"kind": "int"}
+    },
+    "abuse": {
+      "risk": {"kind": "int", "scale": 100},
+      "threat": {"vocab": "threat"},
+      "reports": {"kind": "int"},
+      "last_seen_days": {"kind": "int"},
+      "service": {"vocab": "service"},
+      "evidence": {"vocab": "evidence"},
+      "provider": {"kind": "string"},
+      "user_type": {"vocab": "category"},
+      "flags": {"flags": "flag"}
+    }
+  },
+  "snap": {
+    "exact_when": ["place.lat", "place.lon", "place.accuracy"],
+    "prefix": {"4": 24, "6": 48}
+  },
+  "format": {
+    "magic": "IPLORE",
+    "version": 1,
+    "blocks": {"keys": 16384, "ints": 16384, "strings": 16384},
+    "dictionary": 1048576,
+    "preset": 9,
+    "header_lzma": [3, 0, 0],
+    "candidates": [[3, 0, 0], [0, 2, 2], [0, 0, 0], [1, 0, 0], [0, 1, 1], [0, 2, 0]],
+    "sample_blocks": 4,
+    "natural_order": {
+      "place": ["country", "region", "city", "lat", "lon"],
+      "city": ["district", "name"],
+      "network": ["asn", "handle"],
+      "operator": ["country", "company"]
+    }
+  }
+}

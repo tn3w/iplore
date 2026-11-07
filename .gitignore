@@ -1,0 +1,4 @@
+.env
+inputs/
+dist/
+target/
