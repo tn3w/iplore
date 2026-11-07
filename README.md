@@ -91,17 +91,66 @@ see [CONTRIBUTING](.github/CONTRIBUTING.md).
 
 Caddy, Traefik and nginx add `X-Iplore-Country`, `-Asn`, `-Category`, `-Risk`, `-Service`
 and `-Provider` upstream and answer `403` on a match. Bad rules or an unreadable client
-address fail closed.
+address fail closed. Rules: `block_risk`, `block_service`, `block_country`,
+`allow_country`, `block_category`, `allow_provider` (lists comma-separated in the query
+string, space-separated in Caddy).
+
+Caddy runs a module:
 
 ```sh
 xcaddy build --with github.com/tn3w/iplore/integrations/caddy
-go install github.com/tn3w/iplore/integrations/iplore-server@latest
-iplore-server -file iplore-full.ipl -listen 127.0.0.1:8080 -trusted 127.0.0.0/8
-
-# Caddyfile  iplore * iplore-full.ipl { block_risk 0.5; block_service tor_exit_node }
-# nginx      auth_request /_iplore;  (proxy_pass http://127.0.0.1:8080/?block_risk=0.5)
-# Traefik    forwardAuth address http://127.0.0.1:8080/?block_risk=0.5, trustForwardHeader: true
 ```
+
+```caddyfile
+example.com {
+	iplore * iplore-full.ipl {
+		block_risk 0.5
+		block_service tor_exit_node
+	}
+	reverse_proxy localhost:3000
+}
+```
+
+nginx and Traefik ask the `iplore-server` sidecar, rules go in the query string:
+
+```sh
+go install github.com/tn3w/iplore/integrations/iplore-server@latest
+iplore-server -file iplore-full.ipl   # listens on 127.0.0.1:8080
+```
+
+```nginx
+location = /_iplore {
+    internal;
+    proxy_pass http://127.0.0.1:8080/?block_risk=0.5&block_service=tor_exit_node;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
+
+location / {
+    auth_request /_iplore;
+    auth_request_set $iplore_country $upstream_http_x_iplore_country;
+    proxy_set_header X-Iplore-Country $iplore_country;
+    proxy_pass http://localhost:3000;
+}
+```
+
+```yaml
+# Traefik dynamic config, add the middleware to your routers
+http:
+  middlewares:
+    iplore:
+      forwardAuth:
+        address: http://127.0.0.1:8080/?block_risk=0.5&block_service=tor_exit_node
+        trustForwardHeader: true
+        authResponseHeaders: [X-Iplore-Country, X-Iplore-Asn, X-Iplore-Risk]
+```
+
+Behind a load balancer or CDN, trust it so the real client is judged: Caddy
+`trusted_proxies <cidr>` in the `iplore` block, nginx `set_real_ip_from <cidr>` +
+`real_ip_header X-Forwarded-For`, Traefik entrypoint `forwardedHeaders.trustedIPs`.
+The sidecar trusts loopback (`-trusted`, default `127.0.0.0/8,::1/128`); if it runs
+elsewhere, list the proxy's address there.
 
 Rules, setup and tests: [CONTRIBUTING](.github/CONTRIBUTING.md#integrations).
 
