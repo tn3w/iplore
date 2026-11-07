@@ -1,7 +1,15 @@
 [workspace]
 resolver = "3"
-members = ["builder", "reader"]
+members = ["builder", "reader", "bindings/wasm", "bindings/python"]
+default-members = ["builder", "reader"]
 
 [profile.release]
 lto = "thin"
 codegen-units = 1
+
+[profile.wasm]
+inherits = "release"
+opt-level = "z"
+lto = true
+panic = "abort"
+strip = true

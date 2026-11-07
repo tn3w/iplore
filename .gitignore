@@ -2,3 +2,8 @@
 inputs/
 dist/
 target/
+node_modules/
+.venv/
+bindings/data/
+.wrangler/
+__pycache__/

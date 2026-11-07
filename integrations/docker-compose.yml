@@ -1,0 +1,59 @@
+x-hardened: &hardened
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  upstream:
+    <<: *hardened
+    image: traefik/whoami:v1.12.0@sha256:c4717a8d1f0134a7444e24f881160e033991f23027c6c5a9a3f8fd22e70d1d44
+    user: "65532:65532"
+    environment:
+      WHOAMI_PORT_NUMBER: 8080
+
+  sidecar:
+    <<: *hardened
+    build:
+      context: .
+      dockerfile: iplore-server/Dockerfile
+    command:
+      - -file=/db/iplore-full.ipl
+      - -listen=:8080
+      - -trusted=172.16.0.0/12,192.168.0.0/16
+    volumes:
+      - ./.scratch:/db:ro
+
+  nginx:
+    <<: *hardened
+    image: nginxinc/nginx-unprivileged:1.31.7-alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e
+    depends_on: [sidecar, upstream]
+    ports: ["127.0.0.1:8081:8080"]
+    tmpfs: ["/tmp:mode=1777", "/var/cache/nginx:uid=101,gid=101"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/iplore_check.conf:/etc/nginx/iplore_check.conf:ro
+      - ./nginx/iplore_headers.conf:/etc/nginx/iplore_headers.conf:ro
+
+  caddy:
+    <<: *hardened
+    build:
+      context: .
+      dockerfile: caddy/Dockerfile
+    user: "65532:65532"
+    depends_on: [upstream]
+    ports: ["127.0.0.1:8082:8080"]
+    tmpfs: ["/data:mode=1777", "/config:mode=1777"]
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./.scratch:/db:ro
+
+  traefik:
+    <<: *hardened
+    image: traefik:v3.7.17@sha256:f4bb143d1135a579b630ed491e17ec50f6f7c9c6a30585ff3d385471d2a86f5a
+    user: "65532:65532"
+    command: ["--configFile=/etc/traefik/traefik.yml"]
+    depends_on: [sidecar, upstream]
+    ports: ["127.0.0.1:8083:8080"]
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro

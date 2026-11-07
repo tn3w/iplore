@@ -4,6 +4,8 @@ use serde::Deserialize;
 
 use crate::load_json;
 
+const MAX_TEXT_CHARS: usize = 128;
+
 #[derive(Deserialize)]
 pub struct Patterns {
     pub address: String,
@@ -69,11 +71,13 @@ impl Text {
         let text: String = text
             .chars()
             .filter(|character| {
-                !matches!(character, '\u{200b}'..='\u{200f}' | '\u{feff}')
+                let invisible = matches!(character, '\u{200b}'..='\u{200f}' | '\u{feff}');
+                !invisible && (character.is_whitespace() || !character.is_control())
             })
             .map(|character| if character == '\u{a0}' { ' ' } else { character })
             .collect();
         let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
+        let text: String = text.chars().take(MAX_TEXT_CHARS).collect();
         let text = text.trim_end_matches([',', ';', ':', '/', '-', '_', '|', ' ']).trim();
         let questions = text.chars().filter(|&character| character == '?').count();
         let share = questions as f64 / text.chars().count().max(1) as f64;
@@ -152,4 +156,56 @@ fn mend_double_encoding(text: &str) -> String {
     bytes
         .and_then(|bytes| String::from_utf8(bytes).ok())
         .unwrap_or_else(|| text.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    fn text() -> Text {
+        let rules = json!({
+            "folding": {},
+            "needle_minimum_length": 3,
+            "placeholders": ["n/a"],
+            "placeholder_domains": [],
+            "junk_markers": [],
+            "question_mark_share": 0.5,
+            "street_words": [],
+            "street_leaders": [],
+            "patterns": {
+                "address": "", "asn": "", "whois_geofeed_url": "",
+                "geofeed_line": "", "geofeed_reference": "",
+            },
+        });
+        Text { rules: serde_json::from_value(rules).unwrap(), folding: HashMap::new() }
+    }
+
+    #[test]
+    fn clean_drops_control_characters_but_keeps_word_breaks() {
+        let text = text();
+        assert_eq!(
+            text.clean("Acme\u{0}\u{1b}[31m Corp").as_deref(),
+            Some("Acme[31m Corp")
+        );
+        assert_eq!(
+            text.clean("Acme\tCorp\r\nLtd\u{85}Inc").as_deref(),
+            Some("Acme Corp Ltd Inc")
+        );
+        assert_eq!(text.clean("\u{7f}\u{9b}\u{0}"), None);
+    }
+
+    #[test]
+    fn clean_caps_length() {
+        let text = text();
+        let long = "word ".repeat(100);
+        let cleaned = text.clean(&long).unwrap();
+        assert!(cleaned.chars().count() <= MAX_TEXT_CHARS);
+        assert!(cleaned.starts_with("word word"));
+        assert!(!cleaned.ends_with(' '));
+        let exact = "x".repeat(MAX_TEXT_CHARS);
+        assert_eq!(text.clean(&exact).as_deref(), Some(exact.as_str()));
+        assert_eq!(text.clean(&"é".repeat(300)).unwrap().chars().count(), MAX_TEXT_CHARS);
+    }
 }

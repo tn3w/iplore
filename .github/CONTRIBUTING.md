@@ -13,7 +13,9 @@ mechanisms only. Adding a feed or source is a JSON entry in `data/feeds.json` or
 `data/sources.json` with its `license`.
 
 Rust workspace: `builder` fetches public sources and writes `dist/*.ipl`; `reader`
-(library + `iplore` CLI) answers lookups.
+(library + `iplore` CLI) answers lookups. `reader` decodes LZMA with pure Rust
+(`lzma-rust2`), so it builds for WebAssembly and wheels without a C toolchain; `builder`
+encodes with liblzma. `bindings/*` are workspace members outside `default-members`.
 
 The file stores only facts. Anything a client can compute from the address or from another
 answered value is left out: address spellings, CIDR bounds, local time, granularity, risk
@@ -21,11 +23,97 @@ levels, `is_*` booleans, brand names, ASCII names, flag emoji. Reserved space (l
 private, link-local, CGNAT, documentation, multicast, 6to4, Teredo, ULA, …) is masked:
 it answers nothing and its names are not stored.
 
+## Bindings
+
+`reader` stays the only place with lookup logic; bindings only move bytes and JSON.
+
+Errors are two kinds everywhere, never a panic: an invalid address (`reader::Error::InvalidAddress`,
+CLI exit 2, JS `TypeError`, Python `ValueError`) and a corrupt database
+(`Error::Corrupt`, CLI exit 1, JS `DatabaseError`, Python `iplore.DatabaseError`). `Reader`
+validates the header structure once at open (sections, offsets, block sizes, LZMA settings)
+and caps every decompression, so lookups on untrusted files cannot panic or blow up memory.
+The address grammar is `reader/tests/addresses.json`, shared with the Go reader.
+
+| path | what |
+| --- | --- |
+| `bindings/wasm` | `cdylib`: `allocate`, `load`, `lookup`, `about`, `output`, `output_length`; they return a status (0 ok, 1 invalid address, 2 corrupt database, 3 not loaded, 4 already loaded), one database per instance |
+| `bindings/js` | `iplore` npm package: TypeScript wrapper, `dist/iplore.wasm` (`wasm` profile, `wasm-opt -Oz`), tests |
+| `bindings/python` | PyO3 abi3 wheel (`iplore.open(...)`), `.pyi` stubs, pytest |
+| `bindings/data` | gitignored release databases the tests read |
+
+```sh
+cargo build --release -p reader
+mkdir -p bindings/data && cd bindings/data
+gh release download --repo tn3w/iplore --pattern 'iplore-*.ipl' --pattern SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS && cd ../..
+
+rustup target add wasm32-unknown-unknown
+cd bindings/js && npm install && npm run build
+npm test && npm run test:deno && npm run test:bun && npm run test:workers
+
+pip install pytest ./bindings/python && pytest bindings/python/tests
+```
+
+Tests assert known answers (1.1.1.1, Tor exit, reserved space, v6, v4-mapped, ports),
+error cases, and that ~100 random addresses answer identically to the native CLI;
+`test:workers` runs the wasm inside workerd (Miniflare). `IPLORE_DATA` and `IPLORE_CLI`
+override the database directory and CLI path. `reader/tests/corrupt.rs` mutates
+`bindings/data/iplore-country.ipl` (truncation, header lengths, flipped bytes) and
+needs it present, otherwise it is skipped; CI downloads and checksums it first.
+
+`.github/workflows/bindings.yml` builds and tests on every change. Every push to `master`
+updates the `bindings` pre-release in place (wheels for Linux x86_64/aarch64, macOS,
+Windows, `iplore.tgz` and `SHA256SUMS`; stale assets are removed); it is never marked latest,
+so `releases/latest` stays the database. CI tests against one pinned database release whose
+checksums it verifies. Nothing
+goes to PyPI or npm, no tokens are stored. From source (needs Rust):
+`pip install "git+https://github.com/tn3w/iplore#subdirectory=bindings/python"`.
+
+### Edge workers
+
+Cloudflare Workers and Vercel Edge forbid compiling WebAssembly at runtime, so import it
+(`iplore/iplore.wasm`, on Vercel `iplore/iplore.wasm?module`) and pass it as second argument:
+
+```ts
+import { open } from "iplore";
+import wasm from "iplore/iplore.wasm";
+import country from "./iplore-country.ipl";  // bundled as ArrayBuffer
+
+const database = await open(country, wasm);
+
+export default {
+  fetch(request: Request) {
+    const address = request.headers.get("cf-connecting-ip");
+    if (!address) return new Response("no client address", { status: 400 });
+    return Response.json(database.lookup(address));
+  },
+};
+```
+
+`wrangler.toml` needs a rule so `.ipl` files bundle as data:
+
+```toml
+[[rules]]
+type = "Data"
+globs = ["**/*.ipl"]
+fallthrough = true
+```
+
+Everything is held in memory: use `country`, `anonymizer` or `traffic` builds where memory
+is capped (Workers 128 MB).
+
 ## Releases
 
-`.github/workflows/database.yml` rebuilds every Sunday (or on demand), publishes a
-`db-<date>` release and deletes all but the newest three. Required repository secrets:
-`MAXMIND_LICENSE_KEY`, `IPINFO_TOKEN`, `ABUSECH_AUTH_KEY`, `BGPTOOLS_USER_AGENT`.
+`.github/workflows/database.yml` rebuilds every Sunday (or on demand). The `build` job
+(read-only token; secrets only on the fetch step) checks canaries: 1.1.1.1, 8.8.8.8 and
+9.9.9.9 have abuse risk below 0.4 and are not in `blocklist.netset`, whose entry count is
+within 15% of the previous release. Only then the `publish` job writes `SHA256SUMS`,
+attests build provenance, creates a draft `db-<date>` release, publishes it as latest and
+deletes all but the newest three. Required repository secrets: `MAXMIND_LICENSE_KEY`,
+`IPINFO_TOKEN`, `ABUSECH_AUTH_KEY`, `BGPTOOLS_USER_AGENT`. Downloads are limited to
+`max_bytes` (optional in `sources.json`, default 2 GiB) and 4x that unpacked; sources are
+fetched over https only; `Text::clean` drops control characters and caps strings at 128
+characters.
 
 | release asset | selection |
 | --- | --- |
@@ -37,6 +125,7 @@ it answers nothing and its names are not stored.
 | `iplore-anonymizer.ipl` | `abuse.service` |
 | `iplore-traffic.ipl` | `network.asn+network.operator.category+abuse.user_type` |
 | `blocklist.netset` | `blocklist` |
+| `SHA256SUMS` | checksums of all of the above |
 
 ## Quick start
 
@@ -56,7 +145,7 @@ cargo build --release
 | `builder bench-category` | agreement of domain/name/user rules with listed categories |
 | `builder licenses` | regenerate `data/LICENSES` from the `license` of every source and feed |
 | `builder check <a.ipl> <b.ipl>` | union property: common fields answer identically |
-| `iplore <file> <address>` | JSON answer (v4, v6, v4-mapped, `[addr]:port`, `%zone`) |
+| `iplore <file> <address>` | JSON answer (v4, v6, v4-mapped, `[addr]:port`, `%zone`); exit 2 invalid address, 1 unreadable or corrupt file |
 | `iplore <file> --about` | header: fields, vocabularies, tables, sections, sources |
 | `iplore <file> --bench` | open time, cold/warm lookups, peak RSS |
 
@@ -208,6 +297,77 @@ Every value: `0` = null, else `value + 1` (zigzag for signed, `scale`, vocabular
 flag bitmask, link row). Raw LZMA1 blocks, `[lc,lp,pb]` and delta chosen per section by
 sample. Rows ranked by use or natural key. Hosts (single addresses differing from their
 range) are checked before the spine.
+
+## Integrations
+
+`integrations/` holds one pure-Go, stdlib-only package (`github.com/tn3w/iplore/integrations`):
+`lzma.go` (raw LZMA1), `reader.go` (`.ipl` decoder, six fields), `guard.go` (rules, headers,
+client IP, reload on file change). The Caddy module (`caddy/`, own go.mod) and the
+`iplore-server` sidecar (`iplore-server/main.go`, rules come from the query string) wrap it.
+
+Rules (all three): `block_risk` (0 < x <= 1, >=), `block_service`, `block_country`,
+`allow_country`, `block_category`, `allow_provider`. Matching ignores case. Rules fail closed:
+the sidecar answers `400` and Caddy refuses to load on an unknown key, an unparseable, NaN,
+zero, negative or above-1 `block_risk`, an empty list, malformed percent-encoding or a key
+given twice. `allow_provider` skips the other rules only for records without an anonymizer
+`service`; use it for crawler labels (`Googlebot`), never for hosting or VPN providers.
+
+Client address: the sidecar trusts `X-Forwarded-For` (all header lines, rightmost untrusted
+hop) only when the TCP peer is inside `-trusted` (default loopback); other peers are judged by
+their own address. A malformed hop, an invalid peer or an empty address answers `403`; a
+database read error answers `500`. The sidecar must see the proxy as a trusted peer, so
+`-trusted` has to cover it. Caddy's `iplore` block takes the same list as `trusted_proxies`
+(none: the peer is the client). Client-sent
+`X-Iplore-*` and underscore variants (`X_Iplore_Country`) are stripped; nginx and Traefik
+drop underscore headers, Caddy strips them in the module. Provider strings lose control
+characters and are capped at 128 bytes. Reserved addresses and addresses without a record get
+no headers and pass.
+
+Reload: the database is re-read at most every 5 s after the file changes. A file that fails
+the structural check (header, offsets, sections, key order) is rejected, the previous
+database keeps serving and the error is logged once per distinct message.
+
+Routing: the examples apply the strictest policy to every path and relax it only for the exact
+routes `/open`, `/allow-country` and `/no-hosting` (case-sensitive, nginx and Traefik match the
+normalized path). Anything else, including `/Open` or `/open/../x`, gets the strict policy.
+Upstream paths are not normalized by nginx; keep relaxed routes to plain segments. Traefik
+drops underscore headers, rejects encoded slashes and has no forwardAuth timeout, so
+`respondingTimeouts` bounds a hung sidecar; nginx sets short `proxy_*_timeout` on the auth
+locations. Upstreams get `X-Forwarded-For` from the proxy, `Forwarded` and `X-Real-IP` are
+removed. nginx cannot strip unknown `X-Iplore-*` names (only the six it overwrites).
+Containers run non-root, read-only, `cap_drop: ALL`, `no-new-privileges`, images pinned by
+digest.
+
+Setup per server: `integrations/caddy/Caddyfile`, `integrations/traefik/*.yml`,
+`integrations/nginx/nginx.conf`.
+
+| server | design | size |
+| --- | --- | --- |
+| Caddy | module `http.handlers.iplore`, built with xcaddy | caddy binary +65 KB |
+| Traefik | `forwardAuth` to `iplore-server`, `authResponseHeaders` for the six `X-Iplore-*` | see below |
+| nginx | `auth_request` to `iplore-server`, `iplore_headers.conf` | 6.6 MB static |
+
+Traefik needs `trustForwardHeader: true` (otherwise it replaces `X-Forwarded-For` by the
+connection address) together with entrypoint `forwardedHeaders.trustedIPs` (drops the header
+from untrusted peers); `iplore-server -trusted` lists the same proxy CIDRs, nginx passes
+`$http_x_forwarded_for, $realip_remote_addr` so the sidecar applies the same rule. A match
+answers `403` from the sidecar, a `204` copies the headers, and headers missing from the
+answer are removed from the request. The decoder runs native, cold and warm requests stay
+below 25 ms with `iplore-full.ipl`. Caddyfile paths starting with `/` need the matcher `*`.
+
+`integrations/test.sh` copies the release files from `bindings/data/` (or downloads them) to
+`integrations/.scratch/` (ignored), runs `go vet`/`go test` for both modules, diffs the Go
+decoder against `iplore` on 200 addresses for three databases, then starts all three servers
+with `docker compose` and checks cold/warm latency below 100 ms, headers, `403`s, IPv6, forged
+`X-Forwarded-For` (several lines, malformed hops), forged and underscore `X-Iplore-*`, path
+case/encoding/dot-segment variants, sidecar rule errors, sidecar down or hung (never `200`)
+and a truncated database during reload (old data keeps serving).
+CI: `.github/workflows/integrations.yml`.
+
+Publishing: `go install github.com/tn3w/iplore/integrations/iplore-server@latest` and
+`xcaddy build --with github.com/tn3w/iplore/integrations/caddy` resolve once the repo is
+public and the nested modules are tagged `integrations/v0.1.0` and `integrations/caddy/v0.1.0`
+(`caddy/go.mod` requires `integrations v0.1.0`; its `replace` only serves local builds).
 
 ## Data files
 

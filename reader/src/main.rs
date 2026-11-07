@@ -1,7 +1,9 @@
+use std::ffi::OsString;
 use std::hint::black_box;
+use std::path::Path;
 use std::time::Instant;
 
-use reader::Reader;
+use reader::{Error, Reader};
 
 fn peak_memory_kb() -> u64 {
     let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
@@ -24,7 +26,7 @@ fn random_addresses(count: usize, seed: u64) -> Vec<String> {
     (0..count).map(&mut address).collect()
 }
 
-fn benchmark(path: &str) -> std::io::Result<()> {
+fn benchmark(path: &Path) -> std::io::Result<()> {
     let started = Instant::now();
     let reader = Reader::open(path)?;
     let open = started.elapsed();
@@ -52,32 +54,32 @@ fn benchmark(path: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn print_about(path: &str) -> std::io::Result<()> {
-    let mut about = Reader::open(path)?.about().clone();
-    let sections = about["sections"].as_array_mut().into_iter().flatten();
-    for section in sections.filter_map(|value| value.as_object_mut()) {
-        section.retain(|key, _| key != "offsets" && key != "firsts");
-    }
+fn print_about(path: &Path) -> std::io::Result<()> {
+    let about = Reader::open(path)?.about().clone();
     println!("{}", serde_json::to_string_pretty(&about)?);
     Ok(())
 }
 
-fn print_answer(path: &str, address: &str) -> std::io::Result<()> {
-    let Some(answer) = Reader::open(path)?.lookup(address) else {
-        eprintln!("invalid address: {address}");
-        std::process::exit(2);
-    };
-    println!("{}", serde_json::to_string_pretty(&answer)?);
+fn print_answer(path: &Path, address: &str) -> std::io::Result<()> {
+    match Reader::open(path)?.lookup(address) {
+        Ok(answer) => println!("{}", serde_json::to_string_pretty(&answer)?),
+        Err(Error::InvalidAddress) => {
+            eprintln!("invalid address: {address}");
+            std::process::exit(2);
+        }
+        Err(error) => return Err(std::io::Error::other(error)),
+    }
     Ok(())
 }
 
 fn main() {
-    let arguments: Vec<String> = std::env::args().skip(1).collect();
+    let arguments: Vec<OsString> = std::env::args_os().skip(1).collect();
     let [path, query] = arguments.as_slice() else {
         eprintln!("usage: iplore <file> <address> | --about | --bench");
         std::process::exit(2);
     };
-    let result = match query.as_str() {
+    let path = Path::new(path);
+    let result = match query.to_string_lossy().as_ref() {
         "--bench" => benchmark(path),
         "--about" => print_about(path),
         address => print_answer(path, address),

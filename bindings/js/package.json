@@ -1,0 +1,29 @@
+{
+  "name": "iplore",
+  "version": "0.1.0",
+  "description": "Offline IP lookup from one file: geolocation, ASN, VPN, proxy and Tor detection",
+  "license": "MIT",
+  "repository": "github:tn3w/iplore",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./iplore.wasm": "./dist/iplore.wasm"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build:wasm": "cargo build --profile wasm --target wasm32-unknown-unknown -p wasm --manifest-path ../../Cargo.toml && wasm-opt -Oz --all-features -o dist/iplore.wasm ../../target/wasm32-unknown-unknown/wasm/wasm.wasm",
+    "build": "tsc && npm run build:wasm",
+    "test": "node --test test/iplore.test.mjs",
+    "test:deno": "deno test --allow-read --allow-write --allow-env --allow-run test/iplore.test.mjs",
+    "test:bun": "bun test --timeout 60000 test/iplore.test.mjs",
+    "test:workers": "node test/workers.mjs"
+  },
+  "devDependencies": {
+    "binaryen": "^125.0.0",
+    "miniflare": "^4.0.0",
+    "typescript": "^5.9.0"
+  }
+}

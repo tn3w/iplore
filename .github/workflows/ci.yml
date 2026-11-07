@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       - run: rustup component add rustfmt clippy
@@ -24,5 +26,16 @@ jobs:
       - run: cargo fmt --check
 
       - run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Test database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view --json tagName --jq .tagName)
+          mkdir -p bindings/data
+          gh release download "$tag" --dir bindings/data \
+            --pattern SHA256SUMS --pattern iplore-country.ipl
+          cd bindings/data
+          sha256sum --check --ignore-missing SHA256SUMS
 
       - run: cargo test --locked

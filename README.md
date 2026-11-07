@@ -28,7 +28,8 @@ iplore iplore-full.ipl 1.1.1.1
 ```
 
 Missing values are `null`. Reserved addresses (private, loopback, …) answer nothing.
-IPv4, IPv6, v4-mapped, `[addr]:port` and `%zone` are accepted.
+IPv4, IPv6, v4-mapped, `[addr]:port` and `%zone` are accepted (no surrounding whitespace);
+anything else is an invalid address (CLI exit 2).
 
 ## CLI
 
@@ -38,10 +39,29 @@ IPv4, IPv6, v4-mapped, `[addr]:port` and `%zone` are accepted.
 | `iplore <file> --about` | fields, vocabularies, sources, licenses |
 | `iplore <file> --bench` | open time, cold and warm lookups, peak memory |
 
+## Python, JavaScript, edge
+
+```sh
+release=https://github.com/tn3w/iplore/releases
+pip install iplore --no-index -f $release/expanded_assets/bindings   # Python 3.9+
+npm install $release/download/bindings/iplore.tgz                    # Node, Bun, Deno, Workers
+```
+
+```python
+iplore.open("iplore-full.ipl").lookup("1.1.1.1")["network"]["asn"]  # 13335
+```
+
+```ts
+(await open(await fetch(url))).lookup("1.1.1.1").network?.asn;  // 13335
+```
+
+Workers setup and a full example: [CONTRIBUTING](.github/CONTRIBUTING.md#edge-workers).
+
 ## Downloads
 
 Built every Sunday, newest 3 releases kept.
-`releases/latest/download/<file>` always points at the current build.
+`releases/latest/download/<file>` always points at the current build. Verify with
+`sha256sum -c SHA256SUMS --ignore-missing` or `gh attestation verify <file> -R tn3w/iplore`.
 
 | file | use case | size |
 | --- | --- | ---: |
@@ -66,6 +86,24 @@ see [CONTRIBUTING](.github/CONTRIBUTING.md).
 | `abuse` | `risk` `threat` `reports` `last_seen_days` `service` `evidence` `provider` `user_type` `flags` |
 
 49 fields in total, `iplore <file> --about` lists them.
+
+## Web servers
+
+Caddy, Traefik and nginx add `X-Iplore-Country`, `-Asn`, `-Category`, `-Risk`, `-Service`
+and `-Provider` upstream and answer `403` on a match. Bad rules or an unreadable client
+address fail closed.
+
+```sh
+xcaddy build --with github.com/tn3w/iplore/integrations/caddy
+go install github.com/tn3w/iplore/integrations/iplore-server@latest
+iplore-server -file iplore-full.ipl -listen 127.0.0.1:8080 -trusted 127.0.0.0/8
+
+# Caddyfile  iplore * iplore-full.ipl { block_risk 0.5; block_service tor_exit_node }
+# nginx      auth_request /_iplore;  (proxy_pass http://127.0.0.1:8080/?block_risk=0.5)
+# Traefik    forwardAuth address http://127.0.0.1:8080/?block_risk=0.5, trustForwardHeader: true
+```
+
+Rules, setup and tests: [CONTRIBUTING](.github/CONTRIBUTING.md#integrations).
 
 ## Performance
 

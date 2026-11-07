@@ -1,0 +1,61 @@
+http:
+  services:
+    upstream:
+      loadBalancer:
+        servers:
+          - url: http://upstream:8080
+
+  routers:
+    default:
+      rule: PathPrefix(`/`)
+      priority: 1
+      service: upstream
+      middlewares: [clean, strict]
+    open:
+      rule: Path(`/open`) || PathPrefix(`/open/`)
+      priority: 10
+      service: upstream
+      middlewares: [clean, open]
+    allow-country:
+      rule: Path(`/allow-country`) || PathPrefix(`/allow-country/`)
+      priority: 10
+      service: upstream
+      middlewares: [clean, allow-country]
+    no-hosting:
+      rule: Path(`/no-hosting`) || PathPrefix(`/no-hosting/`)
+      priority: 10
+      service: upstream
+      middlewares: [clean, no-hosting]
+
+  middlewares:
+    clean:
+      headers:
+        customRequestHeaders:
+          Forwarded: ""
+          X-Real-Ip: ""
+    strict:
+      forwardAuth:
+        address: http://sidecar:8080/?block_risk=0.5&block_service=tor_exit_node,anonymous_vpn&block_country=AU,US&block_category=hosting&allow_provider=Googlebot,Bingbot
+        trustForwardHeader: true
+        authResponseHeaders: &headers
+          - X-Iplore-Country
+          - X-Iplore-Asn
+          - X-Iplore-Category
+          - X-Iplore-Risk
+          - X-Iplore-Service
+          - X-Iplore-Provider
+    open:
+      forwardAuth:
+        address: http://sidecar:8080/?block_risk=0.5&block_service=tor_exit_node,anonymous_vpn
+        trustForwardHeader: true
+        authResponseHeaders: *headers
+    allow-country:
+      forwardAuth:
+        address: http://sidecar:8080/?allow_country=US
+        trustForwardHeader: true
+        authResponseHeaders: *headers
+    no-hosting:
+      forwardAuth:
+        address: http://sidecar:8080/?block_category=hosting&allow_provider=Googlebot,Bingbot
+        trustForwardHeader: true
+        authResponseHeaders: *headers

@@ -15,3 +15,27 @@ updates:
     groups:
       all:
         patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /bindings/js
+    schedule:
+      interval: monthly
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directories: [/integrations, /integrations/caddy]
+    schedule:
+      interval: monthly
+    groups:
+      all:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories: ["/integrations/*"]
+    schedule:
+      interval: monthly
+    groups:
+      all:
+        patterns: ["*"]

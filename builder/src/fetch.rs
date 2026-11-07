@@ -48,6 +48,7 @@ struct Settings {
     retries: u32,
     timeout_seconds: u64,
     feed_max_age_hours: u64,
+    max_bytes: Option<u64>,
     host_headers: HostHeaders,
     geofeeds: GeofeedSettings,
     sources: Vec<Source>,
@@ -59,6 +60,9 @@ struct FeedSource {
     url: String,
     hosts: Option<String>,
 }
+
+const DEFAULT_MAX_BYTES: u64 = 2 << 30;
+const UNPACK_FACTOR: u64 = 4;
 
 type HostHeaders = HashMap<String, HashMap<String, String>>;
 
@@ -83,10 +87,10 @@ pub fn run(environment: &Environment) -> io::Result<()> {
     }));
     fs::create_dir_all("inputs/feeds")?;
     let client = Client {
-        agent: agent(&settings.user_agent, settings.timeout_seconds),
+        agent: agent(&settings.user_agent, settings.timeout_seconds, true),
         host_headers: settings.host_headers.clone(),
         retries: settings.retries,
-        max_bytes: u64::MAX,
+        max_bytes: settings.max_bytes.unwrap_or(DEFAULT_MAX_BYTES),
         environment: environment.clone(),
     };
     let lanes = group_lanes(sources);
@@ -112,8 +116,9 @@ pub fn input_path(name: &str) -> PathBuf {
     Path::new("inputs").join(name)
 }
 
-fn agent(user_agent: &str, timeout_seconds: u64) -> ureq::Agent {
+fn agent(user_agent: &str, timeout_seconds: u64, https_only: bool) -> ureq::Agent {
     ureq::Agent::config_builder()
+        .https_only(https_only)
         .user_agent(user_agent)
         .timeout_global(Some(Duration::from_secs(timeout_seconds)))
         .build()
@@ -217,7 +222,7 @@ fn download_source(
     file.flush()?;
     drop(file);
     reject_body(&download, source.reject.as_deref())?;
-    unpack(&download, target, source)?;
+    unpack(&download, target, source, client.max_bytes.saturating_mul(UNPACK_FACTOR))?;
     if let Some(pattern) = &source.hosts {
         resolve_hosts(target, pattern)?;
     }
@@ -308,8 +313,7 @@ impl Client {
             request = request.header(name, value);
         }
         let mut response = request.call().map_err(io::Error::other)?;
-        let mut reader = response.body_mut().as_reader().take(self.max_bytes);
-        io::copy(&mut reader, output)?;
+        copy_capped(response.body_mut().as_reader(), output, self.max_bytes)?;
         Ok(())
     }
 
@@ -342,7 +346,19 @@ fn sniff(path: &Path) -> io::Result<Option<Packing>> {
     Ok(packing)
 }
 
-fn unpack(download: &Path, target: &Path, source: &Source) -> io::Result<()> {
+fn copy_capped(
+    reader: impl Read,
+    output: &mut impl Write,
+    limit: u64,
+) -> io::Result<u64> {
+    let copied = io::copy(&mut reader.take(limit.saturating_add(1)), output)?;
+    if copied > limit {
+        return Err(io::Error::other(format!("data exceeds {limit} bytes")));
+    }
+    Ok(copied)
+}
+
+fn unpack(download: &Path, target: &Path, source: &Source, limit: u64) -> io::Result<()> {
     let mut current = download.to_path_buf();
     let mut step = 0;
     while let Some(packing) = sniff(&current)? {
@@ -351,18 +367,27 @@ fn unpack(download: &Path, target: &Path, source: &Source) -> io::Result<()> {
         let mut output = BufWriter::new(File::create(&next)?);
         let input = BufReader::new(File::open(&current)?);
         match packing {
-            Packing::Gzip => {
-                io::copy(&mut flate2::bufread::MultiGzDecoder::new(input), &mut output)
-            }
-            Packing::Bzip2 => {
-                io::copy(&mut bzip2::bufread::MultiBzDecoder::new(input), &mut output)
-            }
-            Packing::Xz => io::copy(
-                &mut liblzma::bufread::XzDecoder::new_multi_decoder(input),
+            Packing::Gzip => copy_capped(
+                flate2::bufread::MultiGzDecoder::new(input),
                 &mut output,
+                limit,
             ),
-            Packing::Zip => extract_zip(&current, source.member.as_deref(), &mut output),
-            Packing::Tar => extract_tar(&current, source.member.as_deref(), &mut output),
+            Packing::Bzip2 => copy_capped(
+                bzip2::bufread::MultiBzDecoder::new(input),
+                &mut output,
+                limit,
+            ),
+            Packing::Xz => copy_capped(
+                liblzma::bufread::XzDecoder::new_multi_decoder(input),
+                &mut output,
+                limit,
+            ),
+            Packing::Zip => {
+                extract_zip(&current, source.member.as_deref(), &mut output, limit)
+            }
+            Packing::Tar => {
+                extract_tar(&current, source.member.as_deref(), &mut output, limit)
+            }
         }?;
         output.flush()?;
         fs::remove_file(&current)?;
@@ -390,6 +415,7 @@ fn extract_zip(
     path: &Path,
     member: Option<&str>,
     output: &mut impl Write,
+    limit: u64,
 ) -> io::Result<u64> {
     let mut archive =
         zip::ZipArchive::new(File::open(path)?).map_err(io::Error::other)?;
@@ -399,13 +425,14 @@ fn extract_zip(
         entries.push((entry.name().map(String::from).unwrap_or_default(), entry.size()));
     }
     let index = pick_member(&entries, member)?;
-    io::copy(&mut archive.by_index(index).map_err(io::Error::other)?, output)
+    copy_capped(archive.by_index(index).map_err(io::Error::other)?, output, limit)
 }
 
 fn extract_tar(
     path: &Path,
     member: Option<&str>,
     output: &mut impl Write,
+    limit: u64,
 ) -> io::Result<u64> {
     let mut archive = tar::Archive::new(File::open(path)?);
     let entries: Vec<(String, u64)> = archive
@@ -419,9 +446,9 @@ fn extract_tar(
         .collect();
     let index = pick_member(&entries, member)?;
     let mut archive = tar::Archive::new(File::open(path)?);
-    let mut entry =
+    let entry =
         archive.entries()?.nth(index).ok_or_else(|| io::Error::other("tar"))??;
-    io::copy(&mut entry, output)
+    copy_capped(entry, output, limit)
 }
 
 fn filter_lines(input: &Path, output: &Path, pattern: &str) -> io::Result<()> {
@@ -481,7 +508,7 @@ fn fetch_geofeeds(settings: &Settings, environment: &Environment) -> io::Result<
     fs::create_dir_all("inputs/geofeeds")?;
     let urls: Vec<String> = urls.into_iter().collect();
     let client = Client {
-        agent: agent(&settings.user_agent, geofeed.timeout_seconds),
+        agent: agent(&settings.user_agent, geofeed.timeout_seconds, false),
         host_headers: HostHeaders::new(),
         retries: geofeed.retries,
         max_bytes: geofeed.max_bytes,

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "iplore"
+description = "Offline IP lookup from one file: geolocation, ASN, VPN, proxy and Tor detection"
+readme = "../../README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dynamic = ["version"]
+classifiers = ["Typing :: Typed"]
+
+[project.urls]
+Repository = "https://github.com/tn3w/iplore"
+
+[tool.maturin]
+module-name = "iplore"
+strip = true

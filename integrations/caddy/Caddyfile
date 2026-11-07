@@ -1,0 +1,58 @@
+{
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+(proxy) {
+	reverse_proxy upstream:8080 {
+		header_up -Forwarded
+		header_up -X-Real-IP
+	}
+}
+
+:8080 {
+	@open path_regexp ^/open(/|$)
+	handle @open {
+		iplore * /db/iplore-full.ipl {
+			trusted_proxies 172.16.0.0/12 192.168.0.0/16
+			block_risk 0.5
+			block_service tor_exit_node anonymous_vpn
+		}
+		import proxy
+	}
+
+	@allow_country path_regexp ^/allow-country(/|$)
+	handle @allow_country {
+		iplore * /db/iplore-full.ipl {
+			trusted_proxies 172.16.0.0/12 192.168.0.0/16
+			allow_country US
+		}
+		import proxy
+	}
+
+	@no_hosting path_regexp ^/no-hosting(/|$)
+	handle @no_hosting {
+		iplore * /db/iplore-full.ipl {
+			trusted_proxies 172.16.0.0/12 192.168.0.0/16
+			block_category hosting
+			allow_provider Googlebot Bingbot
+		}
+		import proxy
+	}
+
+	handle {
+		iplore * /db/iplore-full.ipl {
+			trusted_proxies 172.16.0.0/12 192.168.0.0/16
+			block_risk 0.5
+			block_service tor_exit_node anonymous_vpn
+			block_country AU US
+			block_category hosting
+			allow_provider Googlebot Bingbot
+		}
+		import proxy
+	}
+}
