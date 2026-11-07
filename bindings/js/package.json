@@ -22,8 +22,8 @@
     "test:workers": "node test/workers.mjs"
   },
   "devDependencies": {
-    "binaryen": "^125.0.0",
+    "binaryen": "^132.0.0",
     "miniflare": "^4.0.0",
-    "typescript": "^5.9.0"
+    "typescript": "^7.0.2"
   }
 }
