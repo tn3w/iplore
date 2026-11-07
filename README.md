@@ -44,7 +44,7 @@ anything else is an invalid address (CLI exit 2).
 ```sh
 release=https://github.com/tn3w/iplore/releases
 pip install iplore --no-index -f $release/expanded_assets/bindings   # Python 3.9+
-npm install $release/download/bindings/iplore.tgz                    # Node, Bun, Deno, Workers
+curl -LO $release/download/bindings/iplore.tgz && npm install ./iplore.tgz   # Node, Bun, Deno, Workers
 ```
 
 ```python
