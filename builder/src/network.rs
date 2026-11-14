@@ -39,6 +39,7 @@ pub struct Categories {
     asrank_ixp: String,
     strength: Vec<String>,
     covered_share: f64,
+    netname_categories: Vec<String>,
     domains: HashMap<String, String>,
     keywords: HashMap<String, Vec<String>>,
     eyeball: Eyeball,
@@ -67,6 +68,7 @@ pub struct NetworkRules {
     minimum_year: i64,
     pub categories: Categories,
     netnames: HashMap<String, Vec<String>>,
+    descr_classes: Vec<String>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -115,6 +117,7 @@ pub struct Networks {
     pub org_ranges: HashMap<String, Vec<(usize, Address, Address)>>,
     pub netname_users: Families<String>,
     pub list_categories: HashMap<u32, String>,
+    pub netname_coverage: HashMap<u32, String>,
     pub rules: NetworkRules,
 }
 
@@ -749,25 +752,38 @@ fn strongest_category(
         .map(|(_, category)| category.clone())
 }
 
+type Typed<'a> = [Vec<(Address, Address, &'a str)>; 2];
+
+fn provider_users(claims: &Claims) -> Typed<'_> {
+    claims.ranges.each_ref().map(|spans| {
+        let typed = spans.iter().filter_map(|span| {
+            let meaning = &claims.meanings[span.value as usize];
+            meaning.provider.as_ref()?;
+            Some((span.first, span.last, meaning.user.as_deref()?))
+        });
+        typed.collect()
+    })
+}
+
+fn netname_users<'a>(users: &'a Families<String>, allowed: &[String]) -> Typed<'a> {
+    users.each_ref().map(|spans| {
+        let typed = spans.iter().filter(|span| allowed.contains(&span.value));
+        typed.map(|span| (span.first, span.last, span.value.as_str())).collect()
+    })
+}
+
 fn covered_categories(
-    claims: &Claims,
+    typed: &Typed,
     routes: &Families<Route>,
     categories: &Categories,
 ) -> HashMap<u32, String> {
     let mut covered: HashMap<(usize, u32, &str), f64> = HashMap::new();
     let mut totals: HashMap<(usize, u32), f64> = HashMap::new();
     for (family_slot, family_routes) in routes.iter().enumerate() {
-        let users: Vec<(&Span<u32>, &str)> = claims.ranges[family_slot]
-            .iter()
-            .filter_map(|span| {
-                let meaning = &claims.meanings[span.value as usize];
-                meaning.provider.as_ref()?;
-                Some((span, meaning.user.as_deref()?))
-            })
-            .collect();
+        let users = &typed[family_slot];
         let mut ranges: Vec<(Address, Address)> =
             family_routes.iter().map(|span| (span.first, span.last)).collect();
-        ranges.extend(users.iter().map(|(span, _)| (span.first, span.last)));
+        ranges.extend(users.iter().map(|(first, last, _)| (*first, *last)));
         sweep(&ranges, |first, last, active| {
             let Some(&route) = active.iter().find(|&&index| index < family_routes.len())
             else {
@@ -779,7 +795,7 @@ fn covered_categories(
             let found: HashSet<&str> = active
                 .iter()
                 .filter_map(|index| index.checked_sub(family_routes.len()))
-                .map(|index| users[index].1)
+                .map(|index| users[index].2)
                 .collect();
             for user in found {
                 *covered.entry((family_slot, asn, user)).or_default() += size;
@@ -888,6 +904,7 @@ fn list_sources(
 fn categorize(
     row: &mut NetworkRow,
     (primary, tags): (Vec<Option<String>>, Vec<Option<String>>),
+    netname: Option<String>,
     categories: &Categories,
     text: &Text,
 ) -> Option<String> {
@@ -911,7 +928,7 @@ fn categorize(
     .or_else(|| keyword_category(&row.names, categories, text));
     row.operator.category = match listed {
         Some(_) => strongest_category(&[lists, &[eyeball]].concat(), categories),
-        None => named.or(eyeball),
+        None => strongest_category(&[named, eyeball, netname], categories),
     };
     listed
 }
@@ -989,7 +1006,13 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
             asn_users.entry(asn).or_default().push(user.clone());
         }
     }
-    let covered = covered_categories(claims, &routes, &rules.categories);
+    let organisation_abuse = &mailboxes.organisations;
+    let whois =
+        load_whois(&rules, &routes, &registry.spans, &rirs, organisation_abuse, text);
+    let categories = &rules.categories;
+    let covered = covered_categories(&provider_users(claims), &routes, categories);
+    let netnames = netname_users(&whois.users, &categories.netname_categories);
+    let netname_coverage = covered_categories(&netnames, &routes, categories);
     let mut asns: BTreeSet<u32> =
         routes.iter().flatten().map(|span| span.value.asn).collect();
     asns.extend(sources.asn_names.keys());
@@ -1001,16 +1024,14 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
         let registration = registry.asns.get(&asn);
         let mut row = operator_row(asn, &sources, registration, text);
         let lists = list_sources(asn, &sources, &asn_users, &covered, &rules.categories);
-        if let Some(listed) = categorize(&mut row, lists, &rules.categories, text) {
+        let netname = netname_coverage.get(&asn).cloned();
+        if let Some(listed) = categorize(&mut row, lists, netname, categories, text) {
             list_categories.insert(asn, listed);
         }
         assign_carrier(&mut row, &codes, &rules.categories.eyeball, text);
         asn_rows.insert(asn, rows.len() as u32);
         rows.push(row);
     }
-    let organisation_abuse = &mailboxes.organisations;
-    let whois =
-        load_whois(&rules, &routes, &registry.spans, &rirs, organisation_abuse, text);
     let share = rules.holder_company_share;
     let holder_spans = holder_spans(&registry, &mut rows, &asn_rows, &routes, share);
     let holders = whois.holders;
@@ -1077,6 +1098,7 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
         org_ranges: whois.org_ranges,
         netname_users: whois.users,
         list_categories,
+        netname_coverage,
         rules,
     }
 }
@@ -1119,6 +1141,16 @@ fn netname_user(netname: &str, words: &HashMap<String, Vec<String>>) -> Option<S
     found.next().is_none().then(|| user.clone())
 }
 
+fn descr_user(
+    object: &crate::whois::WhoisObject,
+    rules: &NetworkRules,
+) -> Option<String> {
+    let lines = object.attributes.iter().filter(|(key, _)| key == "descr");
+    let descr: Vec<&str> = lines.map(|(_, value)| value.as_str()).collect();
+    let user = netname_user(&descr.join(" "), &rules.netnames)?;
+    rules.descr_classes.contains(&user).then_some(user)
+}
+
 fn load_whois(
     rules: &NetworkRules,
     routes: &Families<Route>,
@@ -1158,7 +1190,8 @@ fn load_whois(
             let family_slot = slot(object.family);
             let user = object
                 .get("netname")
-                .and_then(|name| netname_user(name, &rules.netnames));
+                .and_then(|name| netname_user(name, &rules.netnames))
+                .or_else(|| descr_user(&object, rules));
             if let Some(user) = user {
                 let span = Span { first: object.first, last: object.last, value: user };
                 whois.users[family_slot].push(span);
@@ -1172,6 +1205,9 @@ fn load_whois(
                 return None::<()>;
             }
             let mut row = holder_row(&object, org.as_deref(), &org_names, text);
+            if row.operator.company.is_none() && row.handle.is_none() {
+                return None;
+            }
             row.operator.abuse_email = org
                 .and_then(|org| organisation_abuse.get(&org))
                 .and_then(|mail| text.mailbox(mail));

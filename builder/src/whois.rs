@@ -50,12 +50,23 @@ pub fn range_objects<T>(
         if !matches!(attributes[0].0.as_str(), "inetnum" | "inet6num") {
             return;
         }
-        let Some((family, first, last)) = parse_range(range) else {
+        let Some((family, first, last)) = parse_range(&expand_short_v4(range)) else {
             return;
         };
         objects.extend(keep(WhoisObject { family, first, last, attributes }));
     });
     objects
+}
+
+fn expand_short_v4(range: &str) -> String {
+    let Some((address, length)) = range.split_once('/') else {
+        return range.to_string();
+    };
+    if address.contains(':') {
+        return range.to_string();
+    }
+    let missing = 3usize.saturating_sub(address.matches('.').count());
+    format!("{address}{}/{length}", ".0".repeat(missing))
 }
 
 fn value<'a>(attributes: &'a [(String, String)], key: &str) -> Option<&'a str> {

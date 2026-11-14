@@ -11,7 +11,9 @@ Style: self-documenting names, no comments, max 90 chars per line, early returns
 below 4. Domain data (lists, URLs, weights, regexes) lives in `data/*.json`, code holds
 mechanisms only. Adding a feed or source is a JSON entry in `data/feeds.json` or
 `data/sources.json` with its `license`. A feed without a machine-readable list carries its
-documented addresses inline in `ranges` (no `url`, nothing fetched).
+documented addresses inline in `ranges` (no `url`, nothing fetched). Senders that publish
+only an SPF record are fetched as DNS-over-HTTPS JSON (`dns.google/resolve?name=…&type=TXT`)
+with `regex` `ip[46]:(…)`; includes are not followed, so list each leaf record.
 
 Rust workspace: `builder` fetches public sources and writes `dist/*.ipl`; `reader`
 (library + `iplore` CLI) answers lookups. `reader` decodes LZMA with pure Rust
@@ -252,7 +254,7 @@ data/sources.json ─► fetch ─► inputs/ ─► parse ─► resolve ─►
 | --- | --- |
 | `fetch.rs` | env placeholders, host headers, dated listings, pages, lanes, retries, magic-byte unpacking, line filters, hostname resolution, whois geofeeds |
 | `feeds.rs` | feeds + ipsum → rated claims |
-| `geo.rs` | GeoNames, ISO regions, postal, place votes, geofeed vouching |
+| `geo.rs` | GeoNames, ISO regions (Wikidata, names, Natural Earth), postal, place votes, geofeed vouching |
 | `network.rs` | routes, RPKI, registry, operators, categories, carriers, whois holders |
 | `abuse.rs` | claim folding, hosts, network risk, blocklist |
 | `assemble.rs` | tables + spine merge, reserved masking |
@@ -278,8 +280,14 @@ Whois holders get their organisation's RIPE `abuse-c` mailbox and a domain/keywo
 category.
 
 Abuse contact per ASN: asn-abuse, else the RIPE aut-num `abuse-c` (or its organisation's).
-APNIC dumps mask mailboxes, AFRINIC organisations carry no `abuse-c`, LACNIC inetnums
-carry no holder, ARIN has no bulk dump.
+APNIC dumps mask mailboxes (IRT objects too), AFRINIC organisations carry no `abuse-c`
+(IRT `abuse-mailbox` reaches only 63 aut-nums), LACNIC inetnums carry no holder, ARIN has
+no bulk dump.
+
+Whois geofeeds: `geofeed:` and `remarks: Geofeed` on RIPE, APNIC, AFRINIC and LACNIC
+inetnums (LACNIC writes short v4 prefixes like `2.152.34/23`, expanded before parsing).
+A geofeed row counts only inside the range that references it. Whois objects without an
+organisation, description or netname (all of LACNIC) never become holders.
 
 Category per ASN (strongest of `network.json` → `strength` wins):
 
@@ -292,7 +300,20 @@ Category per ASN (strongest of `network.json` → `strength` wins):
    hosters, so it does not decide this).
 3. Eyeball: APNIC users > 1,000 on a stub ASN, or ≥ 1M on any → residential, or
    cellular when the name says mobile/GPRS/LTE/celular/…; joins the vote.
-4. Silent lists: domain (`.gov`, `.edu`, …) or name keywords, else eyeball.
+4. Silent lists: the strongest of domain (`.gov`, `.edu`, …) or name keywords, eyeball, and
+   netname coverage (`netname_categories`, residential only: typed whois ranges cover
+   ≥ 50% of the announced space). Residential name keywords (`broadband`, `cable`, `tv`,
+   `cooperativa`, `fibra`, `provedor de`, …) were picked by precision against listed ASNs
+   (≥ 85%, base rate 55%); a mobile eyeball still beats a `broadband` name.
+
+`builder bench-category` (2026-11-14): name residential 1,785/1,964 (90.9%), netnames
+residential 992/1,163 (85.3%), users residential 79.5%. Rejected: unnamed datacenter lists
+as ASN coverage (X4BNet, FireHOL, MISP, ipcat, …: 62% at any share, they include whole
+ISP ASNs; still range claims), netname hosting/cellular/business coverage (42% / 34% / 9%),
+hosting name words (PeeringDB and bgp.tools have no hosting class to check them against).
+Not covered: unrouted legacy ARIN blocks whose holder registered no ASN; only ARIN whois
+names them (bulk access refused, RDAP terms forbid harvesting). Linking them to whoever
+routes the holder's other blocks names the upstream ISP, not the holder.
 
 Carrier `mobile_code`: cellular or eyeball networks matched by name to MCC-MNC lists in the
 operator's country; the most-matched code wins (lowest on ties).
@@ -302,6 +323,13 @@ and AFRINIC inetnum netnames whose tokens hit exactly one `network.json` → `ne
 become weak claims (any named feed wins, narrowest range next), e.g. Orange FR (ASN
 cellular) ADSL pools → residential, KPN/Telefónica DE APN pools → cellular, VodafoneZiggo
 B2B → business. Classes: cellular, residential (incl. fixed wireless), business, hosting.
+A netname without a class falls back to the joined `descr` lines, same rule, limited to
+`descr_classes` (residential, business, hosting): `BT-ADSL`, `A1 Telekom Austria AG -
+Business Customer`, `Hetzner Online GmbH Datacenter fsn1-dc5`. Cellular stays netname-only,
+descr names companies (`Cellular Solutions Ltd`, `connected by T-Mobile Polska`). Typed
+ranges 516k → 973k; netname words were scored by the listed category of the announcing ASN
+and kept only when they beat the existing residential words (`fixed`, `hfc`, `subscriber`,
+`user`, `hsi`, `wireless`, `wifi`, `dial`, `llu` at 79–98%).
 
 ## File format
 
@@ -396,10 +424,10 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
 | file | holds |
 | --- | --- |
 | `sources.json` | database fetches with `license` (+ `attribution`), host headers, geofeed fetch limits |
-| `feeds.json` | 428 feeds: `license`, `ranges`, `scope`, `format`, `regex`, `hosts`, `geofeed`, `suffix`, `provider`, `user`, `service`, `evidence`, `threat`, `window`, `quality`, `group`, `flags`, `weak`, `trusted` |
+| `feeds.json` | 440 feeds: `license`, `ranges`, `scope`, `format`, `regex`, `hosts`, `geofeed`, `suffix`, `provider`, `user`, `service`, `evidence`, `threat`, `window`, `quality`, `group`, `flags`, `weak`, `trusted` |
 | `schema.json` | vocabularies, tables and column kinds, snapping, file format, natural orders |
 | `scoring.json` | ratings, trust, network risk, blocklist, inference brands, ipsum map |
-| `network.json` | route/holder limits, holder company share, whois per RIR, abuse dumps, reserved registries, category sources, strength, coverage share, eyeball rule, netname classes |
+| `network.json` | route/holder limits, holder company share, whois per RIR, abuse dumps, reserved registries, category sources, strength, coverage share, netname categories, keywords, eyeball rule, netname classes, descr classes |
 | `place.json` | snap radii, confidence, votes, postal, region fixes, EU, US DMA labels |
 | `text.json` | diacritic folding, placeholders, junk, street words, parser regexes |
 
@@ -421,6 +449,25 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
 
 - Holdout city agreement (every 10th geofeed row held out): v4 81.6%, v6 81.8%; with
   borrowed DB-IP cities and registry holders (2026-11-14) v4 82.5%, v6 81.9%.
+- LACNIC whois geofeeds (48 operator feeds, 34k rows) and the Hetzner geofeed (169k rows,
+  not referenced in RIPE whois), same inputs before → after: held-out rows v4 60,547 →
+  62,433, v6 76,573 → 91,817; city agreement v4 81.0 → 81.3%, v6 79.0 → 82.7%. Addresses
+  inside LACNIC-referenced geofeeds answer from the geofeed (confidence 95) in 52% of
+  samples, before 4%.
+- Natural Earth admin1 pads DBF fields with NUL bytes; trimming only spaces had left every
+  `gn_a1_code` unmatched. Fixed, `region.iso` on 2,000 delegated v4 / v6 addresses:
+  67.2 → 89.0% / 62.2 → 87.7% (RIPE 44 → 81%, APNIC 59 → 90%).
+- Region codes: manual `region_fixes`, then Wikidata (GeoNames ID P1566 → ISO 3166-2 P300,
+  one SPARQL query), then ISO name match, then Natural Earth.
+  The old "country + GeoNames admin1 code" rule disagreed with Wikidata on 530 of 999
+  regions (Tokyo `JP-40` is Fukuoka, Aichi `JP-01` is Hokkaido, Riyadh `SA-10`, Madrid
+  the province `ES-M`) and was dropped; ~9% of sampled v4 addresses had a wrong code. Name
+  match agrees with Wikidata 98.9%, Natural Earth 96.6%.
+- Range types from `descr` and new netname words, residential name keywords and netname
+  coverage, same 2,000 addresses: `user_type` v4 12.6 → 17.9% (APNIC 7.6 → 25.5%), v6
+  5.0 → 9.6%; `category` v4 66.2 → 66.7%, v6 56.0 → 56.5%; full file +310 KB. The
+  category gap left is half unrouted space (ARIN legacy holders without ASN) and half small
+  routed ASNs no list or ≥ 85% rule names.
 - Coverage of 2,000 delegated v4 / v6 addresses (2026-11-14, before → after): city
   43.5 → 95.1% / 9.6 → 94.0%, operator company 90.9 → 98.2% / 84.4 → 98.0%, abuse email
   79.0 → 88.4% / 35.9 → 65.0%, category 80.7 → 86.5% / 38.2 → 54.7%; full file +151 KB.
@@ -434,7 +481,7 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
 - Reader: open 0.4–3.5 ms; cold lookup 0.2 µs–0.58 ms; warm 256k/s (full), 700k/s (place),
   3.3M/s (country), 7.8M/s (Tor); peak RSS 16–215 MB. Each lookup walks every link once
   (spine → network → operator, …) and reads all fields from the resolved rows.
-- Every header carries the license list of all 466 sources and feeds (~5 KB).
+- Every header carries the license list of all 479 sources and feeds (~5 KB).
 
 ## Sources
 
@@ -479,11 +526,13 @@ solved):
 | Umkus datacenter ASNs | `Umkus/ip-index` `data/asns_dcs.csv` | ASN numbers only, last update 2025-12 |
 | CleanBrowsing, Control D resolvers | `cleanbrowsing.org/filters`, `controld.com/free-dns` | addresses only rendered client-side, not verifiable |
 | Viriback C2 tracker | `tracker.viriback.com/dump.php` | full history since 2019, no window |
+| Threatview Cobalt Strike C2, Perfect Privacy (gluetun), New Relic synthetics, SparkPost SPF | `threatview.io/Downloads/High-Confidence-CobaltStrike-C2 -Feeds.txt`, `gluetun-servers` `perfect privacy.json`, `nr-synthetics-assets` `ip.json`, `_spf.sparkpostmail.com` | last generated 2026-02 / 404 / 403 / SPF `exists:` macro, no list |
+| LittleJake, GoodBots `semrushbot`, rezmoss and lord-alfred mirrors | `LittleJake/ip-blacklist`, `AnTheMaker/GoodBots`, `rezmoss/cloud-provider-ip-addresses`, `lord-alfred/ipranges` | aggregate of listed feeds / one IP / mirror official lists already fetched |
 | SSLBL IPs, darklist.de, CruzIT, C2-Tracker | `sslbl.abuse.ch/blacklist/sslipblacklist.txt`, `darklist.de/raw.php`, `cruzit.com/xwbl2txt.php`, `montysecurity/C2-Tracker` | deprecated 2025 / empty / parked / 404 |
 | Snort, Talos, Bambenek, Dan.me.uk Tor | `snort.org/downloads/ip-block-list`, `talosintelligence.com/documents/ip-blacklist`, `faf.bambenekconsulting.com/feeds/c2-ipmasterlist.txt`, `dan.me.uk/torlist` | 403/404/rate-limited without a key or allowlisted UA |
 
-MaxMind GeoLite2 City, DB-IP City Lite, IPinfo Lite, GeoNames, iso-codes, Natural Earth,
+MaxMind GeoLite2 City, DB-IP City Lite, IPinfo Lite, GeoNames, iso-codes, Wikidata, Natural Earth,
 IANA special registries, CAIDA pfx2as/as2org/as-rel2/AS Rank, iptoasn, rpki-client VRPs,
 NRO + RIR dumps, PeeringDB, bgp.tools, APNIC aspop, asn-abuse, MCC-MNC lists, operator
-geofeeds and 428 feeds. `data/LICENSES` lists each one with its own license and terms URL
+geofeeds and 440 feeds. `data/LICENSES` lists each one with its own license and terms URL
 (generated by `builder licenses`); every built file carries the same list in its header.

@@ -25,6 +25,7 @@ Sources (data/sources.json)
   geonames_countries                       CC-BY-4.0 https://www.geonames.org/about.html
   geonames_postal                          CC-BY-4.0 https://www.geonames.org/about.html
   iso_3166_2                               LGPL-2.1 https://salsa.debian.org/iso-codes-team/iso-codes/-/blob/main/COPYING
+  wikidata_iso_3166_2                      CC0-1.0 https://www.wikidata.org/wiki/Wikidata:Licensing
   naturalearth_admin1                      public domain https://www.naturalearthdata.com/about/terms-of-use/
   iana_special_v4                          publisher terms https://www.iana.org/
   iana_special_v6                          publisher terms https://www.iana.org/
@@ -484,6 +485,18 @@ Feeds (data/feeds.json)
   skipa_scanner                            per original list https://github.com/MISP/misp-warninglists
   university_scanner                       per original list https://github.com/MISP/misp-warninglists
   modat_misp_scanner                       per original list https://github.com/MISP/misp-warninglists
+  spf_sendgrid                             publisher terms https://dns.google/resolve?name=sendgrid.net&type=TXT
+  spf_mailgun_1                            publisher terms https://dns.google/resolve?name=_spf1.mailgun.org&type=TXT
+  spf_mailgun_2                            publisher terms https://dns.google/resolve?name=_spf2.mailgun.org&type=TXT
+  spf_mandrill                             publisher terms https://dns.google/resolve?name=spf.mandrillapp.com&type=TXT
+  spf_postmark                             publisher terms https://dns.google/resolve?name=spf.mtasv.net&type=TXT
+  spf_brevo                                publisher terms https://dns.google/resolve?name=spf.sendinblue.com&type=TXT
+  spf_mailjet                              publisher terms https://dns.google/resolve?name=spf.mailjet.com&type=TXT
+  spf_amazon_ses                           publisher terms https://dns.google/resolve?name=amazonses.com&type=TXT
+  hetrixtools                              publisher terms https://hetrixtools.com/resources/uptime-monitor-ips.txt
+  updown_v4                                publisher terms https://updown.io/api/nodes/ipv4
+  updown_v6                                publisher terms https://updown.io/api/nodes/ipv6
+  hetzner_geofeed                          publisher terms https://www.hetzner.com/geofeed.csv
 
 Embedded
   US DMA labels (data/place.json metros)  none declared https://github.com/simzou/nielsen-dma

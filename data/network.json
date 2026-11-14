@@ -11,7 +11,8 @@
     "whois_ripe_inet6num": "ripencc",
     "whois_apnic_inetnum": "apnic",
     "whois_apnic_inet6num": "apnic",
-    "whois_afrinic": "afrinic"
+    "whois_afrinic": "afrinic",
+    "whois_lacnic": "lacnic"
   },
   "organisations": ["whois_ripe_organisation", "whois_apnic_organisation", "whois_afrinic"],
   "abuse_roles": "whois_ripe_role",
@@ -46,11 +47,13 @@
       "cellular", "gsm", "epc", "volte", "nbiot", "m2m", "iot"],
     "residential": ["dsl", "adsl", "vdsl", "xdsl", "ftth", "fttb", "fttx", "fttc", "gpon", "pppoe",
       "bras", "bng", "cable", "docsis", "cmts", "broadband", "residential", "dynamic", "dyn",
-      "dialup", "catv", "cgnat", "cgn", "subscribers", "fwa", "wimax", "wisp"],
+      "dialup", "catv", "cgnat", "cgn", "subscribers", "fwa", "wimax", "wisp", "fixed", "hfc",
+      "subscriber", "user", "hsi", "wireless", "wifi", "dial", "llu"],
     "business": ["business", "corp", "corporate", "enterprise", "b2b", "biz", "sme", "soho"],
     "hosting": ["hosting", "vps", "vds", "dedicated", "datacenter", "dc", "colo", "colocation",
       "cloud", "servers", "server"]
   },
+  "descr_classes": ["residential", "business", "hosting"],
   "categories": {
     "peeringdb": {
       "Cable/DSL/ISP": "residential",
@@ -74,6 +77,7 @@
     "strength": ["military", "government", "education", "exchange", "cdn", "hosting", "cellular",
       "residential", "content", "transit", "business", "infrastructure", "non-profit"],
     "covered_share": 0.5,
+    "netname_categories": ["residential"],
     "domains": {
       "military": "\\.mil(\\.[a-z]{2})?$",
       "government": "\\.(gov|gob|gouv|govt|go|gv)(\\.[a-z]{2})?$",
@@ -92,7 +96,9 @@
         "department of", "federal", "bundesamt", "landesamt", "court", "tribunal",
         "agency", "administration", "council"],
       "military": ["army", "navy", "air force", "military", "defense", "defence", "armed forces",
-        "bundeswehr", "marines"]
+        "bundeswehr", "marines"],
+      "residential": ["broadband", "cable", "catv", "television", "tv", "cooperativa", "wifi",
+        "fibra", "banda larga", "provedor de", "telephone company"]
     },
     "eyeball": {
       "users": 1000,
