@@ -27,6 +27,8 @@ iplore iplore-full.ipl 1.1.1.1
 }
 ```
 
+Quick check without installing anything: [iplore.tn3w.dev](https://iplore.tn3w.dev/).
+
 Missing values are `null`. Reserved addresses (private, loopback, …) answer nothing.
 IPv4, IPv6, v4-mapped, `[addr]:port` and `%zone` are accepted (no surrounding whitespace);
 anything else is an invalid address (CLI exit 2).

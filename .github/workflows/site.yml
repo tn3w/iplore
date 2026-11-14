@@ -1,0 +1,72 @@
+name: site
+
+on:
+  push:
+    branches: [master]
+    paths: [.github/index.html, bindings/**, reader/**, .github/workflows/site.yml]
+  workflow_run:
+    workflows: [database]
+    types: [completed]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: bindings/js/package-lock.json
+
+      - run: rustup target add wasm32-unknown-unknown
+
+      - name: Build binding
+        working-directory: bindings/js
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir _site
+          cp .github/index.html bindings/js/dist/iplore.wasm _site/
+          cp bindings/js/dist/index.js _site/iplore.js
+          tag=$(gh release view --json tagName --jq .tagName)
+          gh release download "$tag" --dir _site \
+            --pattern iplore-full.ipl --pattern SHA256SUMS
+          cd _site
+          sha256sum --check --ignore-missing SHA256SUMS
+          rm SHA256SUMS
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
