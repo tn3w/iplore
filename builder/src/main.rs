@@ -149,6 +149,7 @@ fn benchmark_categories() -> io::Result<()> {
             ),
             ("name", network::keyword_category(&row.names, categories, text)),
             ("users", network::users_category(row, categories, text)),
+            ("netnames", networks.netname_coverage.get(asn).cloned()),
         ];
         for (rule, said) in rules {
             let Some(said) = said else {

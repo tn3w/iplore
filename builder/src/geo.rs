@@ -246,21 +246,24 @@ impl Geography {
             .collect();
         let fixes = &self.rules.region_fixes;
         let natural_earth = natural_earth_codes();
+        let wikidata = wikidata_codes();
         tab_columns(&input_path("geonames_admin1"), |columns| {
             if columns.len() < 4 {
                 return;
             }
             let key = columns[0].to_string();
-            let (country, code) = key.split_once('.').unwrap_or((&key, ""));
-            let direct = format!("{country}-{code}");
+            let country = key.split('.').next().unwrap_or(&key);
             let folded = text.fold(columns[1]);
+            let prefix = format!("{country}-");
+            let mut linked = wikidata.get(columns[3].trim()).into_iter().flatten();
+            let linked = linked.find(|iso| iso.starts_with(&prefix));
             let candidates = [
                 fixes.get(&key).cloned(),
-                iso_codes.contains(direct.as_str()).then_some(direct),
-                natural_earth.get(&key).cloned(),
+                linked.cloned(),
                 iso_by_name
                     .get(&(country.to_string(), folded.clone()))
                     .map(|code| code.to_string()),
+                natural_earth.get(&key).cloned(),
             ];
             let iso = candidates
                 .into_iter()
@@ -467,6 +470,17 @@ impl Geography {
     }
 }
 
+fn wikidata_codes() -> HashMap<String, Vec<String>> {
+    let text = fs::read_to_string(input_path("wikidata_iso_3166_2")).unwrap_or_default();
+    let mut codes: HashMap<String, Vec<String>> = HashMap::new();
+    for line in text.lines().skip(1) {
+        if let Some((geonames, iso)) = line.trim().split_once(',') {
+            codes.entry(geonames.to_string()).or_default().push(iso.to_string());
+        }
+    }
+    codes
+}
+
 fn natural_earth_codes() -> HashMap<String, String> {
     let bytes = fs::read(input_path("naturalearth_admin1")).unwrap_or_default();
     let mut codes = HashMap::new();
@@ -495,7 +509,8 @@ fn natural_earth_codes() -> HashMap<String, String> {
             break;
         }
         let read = |(_, offset, length): &(String, usize, usize)| {
-            String::from_utf8_lossy(&record[*offset..offset + length]).trim().to_string()
+            let field = String::from_utf8_lossy(&record[*offset..offset + length]);
+            field.trim_matches(['\0', ' ']).to_string()
         };
         let (iso, gn) = (read(&iso), read(&gn));
         if !gn.is_empty() && iso.len() > 3 && !iso.contains("~") {

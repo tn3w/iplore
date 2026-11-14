@@ -67,13 +67,13 @@ Built every Sunday, newest 3 releases kept.
 
 | file | use case | size |
 | --- | --- | ---: |
-| `iplore-full.ipl` | IP intelligence, everything | 19.5 MB |
-| `iplore-place.ipl` | geolocation, geo-routing, analytics | 6.9 MB |
+| `iplore-full.ipl` | IP intelligence, everything | 19.8 MB |
+| `iplore-place.ipl` | geolocation, geo-routing, analytics | 6.8 MB |
 | `iplore-country.ipl` | country blocking, compliance, localization | 0.5 MB |
 | `iplore-network.ipl` | ASN and operator lookup, abuse contacts | 6.1 MB |
-| `iplore-traffic.ipl` | bot and fraud triage: ASN, hosting / residential / mobile | 1.5 MB |
+| `iplore-traffic.ipl` | bot and fraud triage: ASN, hosting / residential / mobile | 1.8 MB |
 | `iplore-anonymizer.ipl` | detect VPN, proxy, Tor, private relay | 2.2 MB |
-| `iplore-abuse.ipl` | risk scoring: services, providers, threat risk | 5.3 MB |
+| `iplore-abuse.ipl` | risk scoring: services, providers, threat risk | 5.2 MB |
 | `blocklist.netset` | web server protection: 420k CIDRs for nginx, ipset, nftables | 7.3 MB |
 
 Need another cut? `builder abuse.service=tor_exit_node` builds an 11 KB Tor-only file,
@@ -171,9 +171,9 @@ Open 0.4–3.5 ms, cold lookup 0.2 µs–0.58 ms, peak memory 16–215 MB.
 
 ## Accuracy
 
-- City agreement against held-out operator geofeeds: 81.0% (v4), 79.0% (v6)
+- City agreement against held-out operator geofeeds: 81.3% (v4), 82.7% (v6)
 - Each answer carries `confidence` and `accuracy`, filter on them
-- `risk` is a signal from 428 feeds weighted by threat, age and quality, not a verdict
+- `risk` is a signal from 440 feeds weighted by threat, age and quality, not a verdict
 
 ## Data and license
 
