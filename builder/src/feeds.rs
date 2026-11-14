@@ -31,6 +31,7 @@ pub struct Feed {
     pub trusted: bool,
     pub suffix: Option<u32>,
     pub geofeed: bool,
+    pub ranges: Vec<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Default, Debug)]
@@ -225,7 +226,11 @@ fn read_feed(name: &str) -> String {
 }
 
 fn parse_feed(feed: &Feed, scoring: &ScoringFeeds, patterns: &Patterns) -> Parsed {
-    let text = read_feed(&feed.name);
+    let text = if feed.ranges.is_empty() {
+        read_feed(&feed.name)
+    } else {
+        feed.ranges.join("\n")
+    };
     let mut parsed = Parsed::default();
     let meaning = feed.meaning(&scoring.ratings);
     if feed.scope.as_deref() == Some("asn") {

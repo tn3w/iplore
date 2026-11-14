@@ -37,6 +37,7 @@ struct ConfidenceRules {
     country_disagrees: u32,
     single_source_region: u32,
     single_source_country: u32,
+    borrowed_city: u32,
 }
 
 pub struct City {
@@ -720,7 +721,10 @@ fn vote_family(
         let second = majority(layers[follower], cursor, span.first, span.last);
         let winner = sources[leader].votes[span.value as usize];
         let other = second.map(|vote| sources[follower].votes[vote as usize]);
-        let point = decide(geography, &winner, other.as_ref());
+        let point = match other.filter(|other| lends_city(&winner, other)) {
+            Some(lender) => borrow_city(geography, &winner, &lender),
+            None => decide(geography, &winner, other.as_ref()),
+        };
         push_merged(&mut voted, span.first, span.last, interner.point(point));
     }
     voted
@@ -836,6 +840,26 @@ fn decide(geography: &Geography, winner: &Vote, other: Option<&Vote>) -> Point {
         region: winner.region,
         city: winner.city,
         confidence: confidence(geography, winner, other),
+    }
+}
+
+fn lends_city(winner: &Vote, other: &Vote) -> bool {
+    let region_agrees = winner.region.is_none() || winner.region == other.region;
+    winner.city.is_none()
+        && other.city.is_some()
+        && winner.country == other.country
+        && region_agrees
+}
+
+fn borrow_city(geography: &Geography, winner: &Vote, lender: &Vote) -> Point {
+    Point {
+        lat: (lender.lat * 1e4).round() as i32,
+        lon: (lender.lon * 1e4).round() as i32,
+        accuracy: winner.radius.max(lender.radius).round() as u32,
+        country: winner.country,
+        region: lender.region,
+        city: lender.city,
+        confidence: geography.rules.confidence.borrowed_city,
     }
 }
 

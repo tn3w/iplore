@@ -10,7 +10,8 @@
     "country_agrees": 70,
     "country_disagrees": 40,
     "single_source_region": 60,
-    "single_source_country": 55
+    "single_source_country": 55,
+    "borrowed_city": 35
   },
   "accuracy_floor_percentile": 90,
   "postal_radius_km": 10,

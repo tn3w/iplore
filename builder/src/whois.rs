@@ -14,8 +14,7 @@ pub struct WhoisObject {
 
 impl WhoisObject {
     pub fn get(&self, key: &str) -> Option<&str> {
-        let found = self.attributes.iter().find(|(name, _)| name == key);
-        found.map(|(_, value)| value.as_str()).filter(|value| !value.is_empty())
+        value(&self.attributes, key)
     }
 }
 
@@ -59,17 +58,65 @@ pub fn range_objects<T>(
     objects
 }
 
+fn value<'a>(attributes: &'a [(String, String)], key: &str) -> Option<&'a str> {
+    let found = attributes.iter().find(|(name, _)| name == key);
+    found.map(|(_, value)| value.as_str()).filter(|value| !value.is_empty())
+}
+
 pub fn organisations(paths: &[&Path]) -> HashMap<String, String> {
     let mut names = HashMap::new();
     for path in paths {
         blocks(path, |attributes| {
-            let get = |key: &str| attributes.iter().find(|(name, _)| name == key);
-            if let (Some((_, id)), Some((_, name))) =
-                (get("organisation"), get("org-name"))
+            if let (Some(id), Some(name)) =
+                (value(&attributes, "organisation"), value(&attributes, "org-name"))
             {
-                names.insert(id.clone(), name.clone());
+                names.insert(id.to_string(), name.to_string());
             }
         });
     }
     names
+}
+
+pub struct AbuseMailboxes {
+    pub organisations: HashMap<String, String>,
+    pub asns: HashMap<u32, String>,
+}
+
+pub fn abuse_mailboxes(
+    roles: &Path,
+    organisations: &[&Path],
+    aut_nums: &Path,
+) -> AbuseMailboxes {
+    let mut handles: HashMap<String, String> = HashMap::new();
+    blocks(roles, |attributes| {
+        if let (Some(handle), Some(mailbox)) =
+            (value(&attributes, "nic-hdl"), value(&attributes, "abuse-mailbox"))
+        {
+            handles.insert(handle.to_string(), mailbox.to_string());
+        }
+    });
+    let mut by_organisation = HashMap::new();
+    for path in organisations {
+        blocks(path, |attributes| {
+            let mailbox =
+                value(&attributes, "abuse-c").and_then(|handle| handles.get(handle));
+            if let (Some(id), Some(mailbox)) =
+                (value(&attributes, "organisation"), mailbox)
+            {
+                by_organisation.insert(id.to_string(), mailbox.clone());
+            }
+        });
+    }
+    let mut asns = HashMap::new();
+    blocks(aut_nums, |attributes| {
+        let asn = value(&attributes, "aut-num")
+            .and_then(|asn| asn.trim_start_matches("AS").parse::<u32>().ok());
+        let mailbox = value(&attributes, "abuse-c")
+            .and_then(|handle| handles.get(handle))
+            .or_else(|| by_organisation.get(value(&attributes, "org")?));
+        if let (Some(asn), Some(mailbox)) = (asn, mailbox) {
+            asns.insert(asn, mailbox.clone());
+        }
+    });
+    AbuseMailboxes { organisations: by_organisation, asns }
 }

@@ -5,6 +5,7 @@
   "holders": {
     "minimum_prefix": {"4": 8, "6": 16}
   },
+  "holder_company_share": 0.5,
   "whois": {
     "whois_ripe_inetnum": "ripencc",
     "whois_ripe_inet6num": "ripencc",
@@ -13,6 +14,8 @@
     "whois_afrinic": "afrinic"
   },
   "organisations": ["whois_ripe_organisation", "whois_apnic_organisation", "whois_afrinic"],
+  "abuse_roles": "whois_ripe_role",
+  "aut_nums": "whois_ripe_aut_num",
   "lacnic": "whois_lacnic",
   "rir_names": {
     "ripencc": "ripencc",

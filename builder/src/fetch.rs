@@ -57,7 +57,7 @@ struct Settings {
 #[derive(Deserialize)]
 struct FeedSource {
     name: String,
-    url: String,
+    url: Option<String>,
     hosts: Option<String>,
 }
 
@@ -78,9 +78,10 @@ pub fn run(environment: &Environment) -> io::Result<()> {
     let settings: Settings = load_json("sources.json");
     let feeds: Vec<FeedSource> = load_json("feeds.json");
     let mut sources = settings.sources.clone();
-    sources.extend(feeds.into_iter().map(|feed| Source {
+    let fetched = feeds.into_iter().filter(|feed| feed.url.is_some());
+    sources.extend(fetched.map(|feed| Source {
         name: format!("feeds/{}", feed.name),
-        url: Some(feed.url),
+        url: feed.url,
         hosts: feed.hosts,
         max_age_hours: Some(settings.feed_max_age_hours),
         ..Source::default()

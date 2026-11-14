@@ -10,7 +10,8 @@ cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 Style: self-documenting names, no comments, max 90 chars per line, early returns, nesting
 below 4. Domain data (lists, URLs, weights, regexes) lives in `data/*.json`, code holds
 mechanisms only. Adding a feed or source is a JSON entry in `data/feeds.json` or
-`data/sources.json` with its `license`.
+`data/sources.json` with its `license`. A feed without a machine-readable list carries its
+documented addresses inline in `ranges` (no `url`, nothing fetched).
 
 Rust workspace: `builder` fetches public sources and writes `dist/*.ipl`; `reader`
 (library + `iplore` CLI) answers lookups. `reader` decodes LZMA with pure Rust
@@ -229,13 +230,16 @@ network risk = noisy-OR(ASN feeds, √(risk-weighted share of announced space))
 | service | tor 0.85, public proxy 0.75, residential proxy 0.7, VPN 0.5, private relay 0.15 |
 | evidence | published/measured 1.0, reported 0.85, inferred 0.6 |
 
-Trusted (operator-published CDN/crawler) ranges damp risk to ¼ and accept only
-published/measured services. The strongest service claim wins by weakness, evidence,
-service order; `user_type` comes from the strongest range claim (not weak, then named
-provider, then narrowest). ASN baselines (tags, inferred
-VPN/proxy brands, satellite operators) reach every address but carry no address risk.
-Blocklist: own risk ≥ 0.40 outside trusted ranges (service floors make published VPN lists
-of normal quality, proxies and Tor exits qualify; private relays at 0.15 do not).
+Trusted (operator-published CDN/crawler, public DNS resolver) ranges damp risk to ¼ and
+accept only published/measured services. Public resolvers (Google, Quad9, OpenDNS,
+AdGuard, Mullvad, DNS.SB) are trusted because they show up in DNS-recursion and VoIP lists
+by design: 9.9.9.9 was listed by `dataplane_dnsrd`, `dataplane_dnsrdany` and `voipbl`
+(risk 0.5, blocklisted) and failed the release canary. The strongest service claim wins by
+weakness, evidence, service order; `user_type` comes from the strongest range claim (not
+weak, then named provider, then narrowest). ASN baselines (tags, inferred VPN/proxy
+brands, satellite operators) reach every address but carry no address risk. Blocklist: own
+risk ≥ 0.40 outside trusted ranges (service floors make published VPN lists of normal
+quality, proxies and Tor exits qualify; private relays at 0.15 do not).
 
 ## Pipeline
 
@@ -256,8 +260,26 @@ data/sources.json ─► fetch ─► inputs/ ─► parse ─► resolve ─►
 
 Place: geofeeds > MaxMind GeoLite2 City > DB-IP City Lite; DB-IP leads only where MaxMind
 is silent and otherwise votes once per MaxMind range (majority by address mass) to set
-confidence. Network: RouteViews pfx2as (iptoasn fallback), VRPs, NRO registry, widest whois
-holder for unannounced space.
+confidence. Where MaxMind knows only the country (or region), DB-IP lends its city if it
+agrees on country and region: MaxMind keeps its radius, confidence drops to
+`borrowed_city` (35; such cities are within 25 km of the geofeed city for 52% of v4 and
+42% of v6 rows).
+MaxMind's city-less coordinates are one fixed point per country (Dublin for all of IE), so
+they are never snapped to a city, and DB-IP never overrides MaxMind's country (it is right
+11–37% of the time when they disagree).
+
+Network: RouteViews pfx2as (iptoasn fallback), VRPs, NRO registry; unannounced space
+takes, in order, the registry holder's operator, then the widest whois holder. Registry
+holder: the NRO opaque id links a delegated block to the ASNs of the same holder; when one
+company holds at least `holder_company_share` (0.5) of them, its most-routed ASN lends its
+operator (company, category, website, abuse contact, …) without `asn`. The share check
+keeps NIR pools (one APNIC id holds 5,431 ASNs of IRINN members, others CNNIC, IDNIC) out.
+Whois holders get their organisation's RIPE `abuse-c` mailbox and a domain/keyword
+category.
+
+Abuse contact per ASN: asn-abuse, else the RIPE aut-num `abuse-c` (or its organisation's).
+APNIC dumps mask mailboxes, AFRINIC organisations carry no `abuse-c`, LACNIC inetnums
+carry no holder, ARIN has no bulk dump.
 
 Category per ASN (strongest of `network.json` → `strength` wins):
 
@@ -374,10 +396,10 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
 | file | holds |
 | --- | --- |
 | `sources.json` | database fetches with `license` (+ `attribution`), host headers, geofeed fetch limits |
-| `feeds.json` | 414 feeds: `license`, `scope`, `format`, `regex`, `hosts`, `geofeed`, `suffix`, `provider`, `user`, `service`, `evidence`, `threat`, `window`, `quality`, `group`, `flags`, `weak`, `trusted` |
+| `feeds.json` | 428 feeds: `license`, `ranges`, `scope`, `format`, `regex`, `hosts`, `geofeed`, `suffix`, `provider`, `user`, `service`, `evidence`, `threat`, `window`, `quality`, `group`, `flags`, `weak`, `trusted` |
 | `schema.json` | vocabularies, tables and column kinds, snapping, file format, natural orders |
 | `scoring.json` | ratings, trust, network risk, blocklist, inference brands, ipsum map |
-| `network.json` | route/holder limits, whois per RIR, reserved registries, category sources, strength, coverage share, eyeball rule, netname classes |
+| `network.json` | route/holder limits, holder company share, whois per RIR, abuse dumps, reserved registries, category sources, strength, coverage share, eyeball rule, netname classes |
 | `place.json` | snap radii, confidence, votes, postal, region fixes, EU, US DMA labels |
 | `text.json` | diacritic folding, placeholders, junk, street words, parser regexes |
 
@@ -397,7 +419,11 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
   hosting 70, transit 20, none 22 (before: transit 267, cellular 202); `mobile_code` on 29% of
   sampled addresses (was `mnc` 6%), `website` 88% (was 63%).
 
-- Holdout city agreement (every 10th geofeed row held out): v4 81.6%, v6 81.8%.
+- Holdout city agreement (every 10th geofeed row held out): v4 81.6%, v6 81.8%; with
+  borrowed DB-IP cities and registry holders (2026-11-14) v4 82.5%, v6 81.9%.
+- Coverage of 2,000 delegated v4 / v6 addresses (2026-11-14, before → after): city
+  43.5 → 95.1% / 9.6 → 94.0%, operator company 90.9 → 98.2% / 84.4 → 98.0%, abuse email
+  79.0 → 88.4% / 35.9 → 65.0%, category 80.7 → 86.5% / 38.2 → 54.7%; full file +151 KB.
 - Reserved space (127.0.0.1, 10/8, 169.254/16, 100.64/10, 224/4, ::1, fe80::/10,
   fc00::/7, 2002::/16, …) answers nothing.
 - Spot checks: 1.1.1.1 Cloudflare AS13335 anycast; 185.220.101.1 tor_exit_node;
@@ -408,7 +434,7 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
 - Reader: open 0.4–3.5 ms; cold lookup 0.2 µs–0.58 ms; warm 256k/s (full), 700k/s (place),
   3.3M/s (country), 7.8M/s (Tor); peak RSS 16–215 MB. Each lookup walks every link once
   (spine → network → operator, …) and reads all fields from the resolved rows.
-- Every header carries the license list of all 450 sources and feeds (~5 KB).
+- Every header carries the license list of all 466 sources and feeds (~5 KB).
 
 ## Sources
 
@@ -428,7 +454,8 @@ IPs not already in keyless mirrors), AlienVault OTX (610 unique IPs per month), 
 Radar (ASN data duplicates PeeringDB), PeeringDB key (same data anonymously), ARIN bulk
 whois (access not granted). Per-host auth headers live in `sources.json` → `host_headers`.
 
-Feed candidates skipped (verified reachable 2026-11-06; revisit if size or role is solved):
+Feed candidates skipped (verified 2026-11-06 and 2026-11-14; revisit if size or role is
+solved):
 
 | candidate | URL | why skipped |
 | --- | --- | --- |
@@ -446,10 +473,17 @@ Feed candidates skipped (verified reachable 2026-11-06; revisit if size or role 
 | Stanford ASdb | `asdb.stanford.edu/static-website/data/<date>_categorized_ases.csv` | "satellite" = satellite TV/cable; 55% of hosting ASNs also ISPs |
 | bgp.tools `anycast`, `tor`, `ddosm`, `vpn` tags | `bgp.tools/tags/<slug>.txt` | capability tags, ASN-wide: `vpn` covers China Unicom, Cloudflare, Amazon; `ddosm` is not a CDN |
 | stale FireHOL mirrors | `cybercure`, `graphiclineweb`, `iblocklist_malc0de`, `cleantalk_new_1d`, `vxvault` | source file older than 3 months |
+| ThreatHive | `threathive.net/hiveblocklist.txt` (185k) | correlates 20+ public feeds already listed (61% overlap) |
+| OpenGeoFeed | `opengeofeed.org/feed/` | HTML page, 2,575 located prefixes |
+| MISP `*-nt-scanning` (Bufferover, Cyberresilience, IPIP), `vpn-ipv4/6`, `stackpath` | `MISP/misp-warninglists` | duplicates of listed scanner lists / X4BNet mirror / empty since the CDN shut down |
+| Umkus datacenter ASNs | `Umkus/ip-index` `data/asns_dcs.csv` | ASN numbers only, last update 2025-12 |
+| CleanBrowsing, Control D resolvers | `cleanbrowsing.org/filters`, `controld.com/free-dns` | addresses only rendered client-side, not verifiable |
+| Viriback C2 tracker | `tracker.viriback.com/dump.php` | full history since 2019, no window |
+| SSLBL IPs, darklist.de, CruzIT, C2-Tracker | `sslbl.abuse.ch/blacklist/sslipblacklist.txt`, `darklist.de/raw.php`, `cruzit.com/xwbl2txt.php`, `montysecurity/C2-Tracker` | deprecated 2025 / empty / parked / 404 |
 | Snort, Talos, Bambenek, Dan.me.uk Tor | `snort.org/downloads/ip-block-list`, `talosintelligence.com/documents/ip-blacklist`, `faf.bambenekconsulting.com/feeds/c2-ipmasterlist.txt`, `dan.me.uk/torlist` | 403/404/rate-limited without a key or allowlisted UA |
 
 MaxMind GeoLite2 City, DB-IP City Lite, IPinfo Lite, GeoNames, iso-codes, Natural Earth,
 IANA special registries, CAIDA pfx2as/as2org/as-rel2/AS Rank, iptoasn, rpki-client VRPs,
 NRO + RIR dumps, PeeringDB, bgp.tools, APNIC aspop, asn-abuse, MCC-MNC lists, operator
-geofeeds and 414 feeds. `data/LICENSES` lists each one with its own license and terms URL
+geofeeds and 428 feeds. `data/LICENSES` lists each one with its own license and terms URL
 (generated by `builder licenses`); every built file carries the same list in its header.

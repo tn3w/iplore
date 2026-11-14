@@ -47,6 +47,8 @@ Sources (data/sources.json)
   whois_ripe_inetnum                       RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
   whois_ripe_inet6num                      RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
   whois_ripe_organisation                  RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
+  whois_ripe_role                          RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
+  whois_ripe_aut_num                       RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
   whois_apnic_inetnum                      publisher terms https://www.apnic.net/
   whois_apnic_inet6num                     publisher terms https://www.apnic.net/
   whois_apnic_organisation                 publisher terms https://www.apnic.net/
@@ -141,6 +143,7 @@ Feeds (data/feeds.json)
   x4bnet_vpn                               none declared https://github.com/X4BNet/lists_vpn
   riskdb_net_vpn                           BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
   hola                                     GPL-3.0 https://github.com/az0/vpn_ip/blob/main/LICENSE
+  az0_vpn                                  GPL-3.0 https://github.com/az0/vpn_ip/blob/main/LICENSE
   shadowwhisperer_vpn                      Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
   riskdb_ip_vpn                            BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE
   abuseipdb_3d                             none declared https://github.com/borestad/blocklist-abuseipdb
@@ -200,6 +203,7 @@ Feeds (data/feeds.json)
   blocklist_de_strong                      publisher terms https://lists.blocklist.de/lists/strongips.txt
   dataplane_sshclient                      publisher terms https://dataplane.org/sshclient.txt
   dataplane_sshpwauth                      publisher terms https://dataplane.org/sshpwauth.txt
+  jamesbrine_bruteforce                    none declared https://jamesbrine.com.au/csv
   dataplane_telnetlogin                    publisher terms https://dataplane.org/telnetlogin.txt
   dataplane_vncrfb                         publisher terms https://dataplane.org/vncrfb.txt
   dataplane_sipquery                       publisher terms https://dataplane.org/sipquery.txt
@@ -300,6 +304,11 @@ Feeds (data/feeds.json)
   anycatch_v4                              none declared https://github.com/bgptools/anycast-prefixes
   anycatch_v6                              none declared https://github.com/bgptools/anycast-prefixes
   google_public_dns                        publisher terms https://www.gstatic.com/ipranges/publicdns.json
+  quad9_dns                                publisher documentation https://quad9.net/service/service-addresses-and-features/
+  opendns                                  publisher documentation https://www.opendns.com/setupguide/
+  adguard_dns                              publisher documentation https://adguard-dns.io/kb/general/dns-providers/
+  mullvad_dns                              publisher documentation https://mullvad.net/en/help/dns-over-https-and-dns-over-tls
+  dnssb                                    publisher documentation https://dns.sb/
   proxifly                                 GPL-3.0 https://github.com/proxifly/free-proxy-list/blob/main/LICENSE
   monosans_http                            MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
   monosans_socks5                          MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
@@ -433,6 +442,7 @@ Feeds (data/feeds.json)
   godaddy                                  per original list https://github.com/MISP/misp-warninglists
   wikimedia                                per original list https://github.com/MISP/misp-warninglists
   tenable_cloud_ipv4                       per original list https://github.com/MISP/misp-warninglists
+  tenable_cloud_ipv6                       per original list https://github.com/MISP/misp-warninglists
   palo_alto_networks_cortex_cloud          per original list https://github.com/MISP/misp-warninglists
   microsoft_azure_china                    per original list https://github.com/MISP/misp-warninglists
   microsoft_azure_us_gov                   per original list https://github.com/MISP/misp-warninglists
@@ -467,6 +477,12 @@ Feeds (data/feeds.json)
   dataplane_dnsrdany                       publisher terms https://dataplane.org/dnsrdany.txt
   dataplane_dnsversion                     publisher terms https://dataplane.org/dnsversion.txt
   censys_misp_scanner                      per original list https://github.com/MISP/misp-warninglists
+  adscore_scanner                          per original list https://github.com/MISP/misp-warninglists
+  f6_scanner                               per original list https://github.com/MISP/misp-warninglists
+  internetmetrics_scanner                  per original list https://github.com/MISP/misp-warninglists
+  ipip_scanner                             per original list https://github.com/MISP/misp-warninglists
+  skipa_scanner                            per original list https://github.com/MISP/misp-warninglists
+  university_scanner                       per original list https://github.com/MISP/misp-warninglists
   modat_misp_scanner                       per original list https://github.com/MISP/misp-warninglists
 
 Embedded

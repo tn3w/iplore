@@ -1,5 +1,6 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::Deserialize;
@@ -13,7 +14,7 @@ use crate::spans::{
     slot, sweep,
 };
 use crate::text::{Text, decode_line};
-use crate::whois::{organisations, range_objects};
+use crate::whois::{AbuseMailboxes, abuse_mailboxes, organisations, range_objects};
 use crate::{load_json, log};
 
 #[derive(Deserialize)]
@@ -55,8 +56,11 @@ pub struct Reserved {
 pub struct NetworkRules {
     routes: Limits,
     holders: Limits,
+    holder_company_share: f64,
     whois: HashMap<String, String>,
     organisations: Vec<String>,
+    abuse_roles: String,
+    aut_nums: String,
     lacnic: String,
     rir_names: HashMap<String, String>,
     pub reserved: Reserved,
@@ -137,13 +141,17 @@ fn year_of(date: &str, minimum: i64) -> Option<u16> {
     (year >= minimum).then_some(year as u16)
 }
 
-fn registry(
-    rirs: &[String],
-    rules: &NetworkRules,
-    minimum_year: i64,
-) -> (Families<Registration>, HashMap<u32, Registration>) {
+#[derive(Default)]
+struct Registry {
+    spans: Families<Registration>,
+    asns: HashMap<u32, Registration>,
+    holder_blocks: Vec<(usize, Span<String>)>,
+    holder_asns: HashMap<String, Vec<u32>>,
+}
+
+fn registry(rirs: &[String], rules: &NetworkRules, minimum_year: i64) -> Registry {
     let mut spans: Vec<(usize, Span<Registration>)> = Vec::new();
-    let mut asns = HashMap::new();
+    let mut registry = Registry::default();
     for line in lines("nro_delegated") {
         let columns: Vec<&str> = line.split('|').collect();
         if columns.len() < 7
@@ -169,13 +177,17 @@ fn registry(
         let Ok(value) = columns[4].parse::<u128>() else {
             continue;
         };
+        let holder = columns.get(7).filter(|id| !id.is_empty()).map(|id| id.to_string());
         match columns[2] {
             "asn" => {
                 let Ok(start) = columns[3].parse::<u32>() else {
                     continue;
                 };
                 for asn in start..start.saturating_add(value as u32) {
-                    asns.insert(asn, registration);
+                    registry.asns.insert(asn, registration);
+                    if let Some(holder) = &holder {
+                        registry.holder_asns.entry(holder.clone()).or_default().push(asn);
+                    }
                 }
             }
             "ipv4" | "ipv6" => {
@@ -188,19 +200,87 @@ fn registry(
                     crate::spans::prefix_range(family, first, value as u32).1
                 };
                 spans.push((family, Span { first, last, value: registration }));
+                if let Some(holder) = holder {
+                    registry
+                        .holder_blocks
+                        .push((family, Span { first, last, value: holder }));
+                }
             }
             _ => {}
         }
     }
-    let mut families = crate::spans::split_families(spans);
-    for family in families.iter_mut() {
+    registry.spans = crate::spans::split_families(spans);
+    for family in registry.spans.iter_mut() {
         family.sort_by_key(|span| span.first);
         let merged = std::mem::take(family);
         for span in merged {
             push_merged(family, span.first, span.last, span.value);
         }
     }
-    (families, asns)
+    registry
+}
+
+fn representative_asn(
+    asns: &[u32],
+    rows: &[NetworkRow],
+    asn_rows: &HashMap<u32, u32>,
+    route_counts: &HashMap<u32, usize>,
+    company_share: f64,
+) -> Option<u32> {
+    let company_of = |asn: &u32| {
+        let row = &rows[*asn_rows.get(asn)? as usize];
+        row.operator.company.as_deref()
+    };
+    let mut counts: HashMap<&str, usize> = HashMap::new();
+    for company in asns.iter().filter_map(company_of) {
+        *counts.entry(company).or_default() += 1;
+    }
+    let named: usize = counts.values().sum();
+    let (company, count) = counts
+        .into_iter()
+        .max_by_key(|&(company, count)| (count, std::cmp::Reverse(company)))?;
+    if (count as f64) < company_share * named as f64 {
+        return None;
+    }
+    asns.iter()
+        .filter(|asn| company_of(asn) == Some(company))
+        .max_by_key(|asn| {
+            (route_counts.get(asn).copied().unwrap_or(0), std::cmp::Reverse(**asn))
+        })
+        .copied()
+}
+
+fn holder_spans(
+    registry: &Registry,
+    rows: &mut Vec<NetworkRow>,
+    asn_rows: &HashMap<u32, u32>,
+    routes: &Families<Route>,
+    company_share: f64,
+) -> Families<u32> {
+    let mut route_counts: HashMap<u32, usize> = HashMap::new();
+    for span in routes.iter().flatten() {
+        *route_counts.entry(span.value.asn).or_default() += 1;
+    }
+    let mut holder_rows: HashMap<&str, Option<u32>> = HashMap::new();
+    let mut spans: Families<u32> = [Vec::new(), Vec::new()];
+    for (family, block) in &registry.holder_blocks {
+        let row = *holder_rows.entry(&block.value).or_insert_with(|| {
+            let asns = registry.holder_asns.get(&block.value)?;
+            let asn =
+                representative_asn(asns, rows, asn_rows, &route_counts, company_share)?;
+            let operator = rows[asn_rows[&asn] as usize].operator.clone();
+            rows.push(NetworkRow { operator, ..NetworkRow::default() });
+            Some(rows.len() as u32 - 1)
+        });
+        if let Some(row) = row {
+            spans[slot(*family)].push(Span {
+                first: block.first,
+                last: block.last,
+                value: row,
+            });
+        }
+    }
+    spans
 }
 
 fn first_asn(text: &str) -> Option<u32> {
@@ -337,12 +417,13 @@ struct Sources {
     peeringdb_orgs: HashMap<u64, Value>,
     lacnic_cities: HashMap<u32, String>,
     abuse: HashMap<u32, String>,
+    whois_abuse: HashMap<u32, String>,
     bgptools: HashMap<u32, String>,
     users: HashMap<u32, u64>,
     ipinfo: HashMap<u32, (Option<String>, Option<String>)>,
 }
 
-fn load_sources(rules: &NetworkRules) -> Sources {
+fn load_sources(rules: &NetworkRules, whois_abuse: HashMap<u32, String>) -> Sources {
     let mut sources = Sources {
         asn_names: HashMap::new(),
         as2org: HashMap::new(),
@@ -352,6 +433,7 @@ fn load_sources(rules: &NetworkRules) -> Sources {
         peeringdb_orgs: HashMap::new(),
         lacnic_cities: HashMap::new(),
         abuse: HashMap::new(),
+        whois_abuse,
         bgptools: HashMap::new(),
         users: HashMap::new(),
         ipinfo: HashMap::new(),
@@ -627,7 +709,10 @@ fn operator_row(
         website,
         address: (!address.is_empty()).then_some(address),
         country,
-        abuse_email: sources.abuse.get(&asn).and_then(|mail| text.mailbox(mail)),
+        abuse_email: [sources.abuse.get(&asn), sources.whois_abuse.get(&asn)]
+            .into_iter()
+            .flatten()
+            .find_map(|mail| text.mailbox(mail)),
         since: registration.and_then(|registration| registration.year).map(u64::from),
         tier: sources.tiers.get(&asn).copied(),
         cone: sources.asrank.get(&asn).and_then(|rank| rank.0),
@@ -893,10 +978,11 @@ fn assign_carrier(
 pub fn build(text: &Text, claims: &Claims) -> Networks {
     let rules: NetworkRules = load_json("network.json");
     let rirs = rir_list();
-    let (registry, registered_asns) = registry(&rirs, &rules, rules.minimum_year);
+    let registry = registry(&rirs, &rules, rules.minimum_year);
     let routes = routes(&rules);
     log(&format!("routes: v4 {} v6 {}", routes[0].len(), routes[1].len()));
-    let sources = load_sources(&rules);
+    let mailboxes = load_mailboxes(&rules);
+    let sources = load_sources(&rules, mailboxes.asns);
     let mut asn_users: HashMap<u32, Vec<String>> = HashMap::new();
     for &(asn, meaning) in &claims.asns {
         if let Some(user) = &claims.meanings[meaning as usize].user {
@@ -912,7 +998,7 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
     let mut asn_rows = HashMap::new();
     let mut list_categories = HashMap::new();
     for asn in asns {
-        let registration = registered_asns.get(&asn);
+        let registration = registry.asns.get(&asn);
         let mut row = operator_row(asn, &sources, registration, text);
         let lists = list_sources(asn, &sources, &asn_users, &covered, &rules.categories);
         if let Some(listed) = categorize(&mut row, lists, &rules.categories, text) {
@@ -922,7 +1008,11 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
         asn_rows.insert(asn, rows.len() as u32);
         rows.push(row);
     }
-    let whois = load_whois(&rules, &routes, &registry, &rirs, text);
+    let organisation_abuse = &mailboxes.organisations;
+    let whois =
+        load_whois(&rules, &routes, &registry.spans, &rirs, organisation_abuse, text);
+    let share = rules.holder_company_share;
+    let holder_spans = holder_spans(&registry, &mut rows, &asn_rows, &routes, share);
     let holders = whois.holders;
     let mut spans: Families<NetworkSpan> = [Vec::new(), Vec::new()];
     for family_slot in 0..2 {
@@ -940,6 +1030,17 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
                 value: (0, value),
             });
         }
+        let family = [4, 6][family_slot];
+        for span in &holder_spans[family_slot] {
+            let prefix =
+                prefix_length(family, span.first, span.last).map(|length| length as u8);
+            let value = NetworkSpan { network: span.value, prefix, rpki: None };
+            candidates.push(Span {
+                first: span.first,
+                last: span.last,
+                value: (1, value),
+            });
+        }
         for (holder, family, first, last) in &holders {
             if slot(*family) != family_slot {
                 continue;
@@ -948,7 +1049,7 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
             rows.push(holder.clone());
             let prefix = prefix_length(*family, *first, *last).map(|length| length as u8);
             let value = NetworkSpan { network: row_index, prefix, rpki: None };
-            candidates.push(Span { first: *first, last: *last, value: (1, value) });
+            candidates.push(Span { first: *first, last: *last, value: (2, value) });
         }
         candidates.sort_by_key(|span| span.first);
         let picked = pick(&candidates, |span| {
@@ -970,7 +1071,7 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
     Networks {
         rows,
         spans,
-        registry,
+        registry: registry.spans,
         asn_rows,
         whois_geofeeds: whois.geofeeds,
         org_ranges: whois.org_ranges,
@@ -978,6 +1079,25 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
         list_categories,
         rules,
     }
+}
+
+fn organisation_paths(rules: &NetworkRules) -> Vec<PathBuf> {
+    rules.organisations.iter().map(|name| input_path(name)).collect()
+}
+
+fn load_mailboxes(rules: &NetworkRules) -> AbuseMailboxes {
+    let organisation_paths = organisation_paths(rules);
+    let organisation_refs: Vec<&Path> =
+        organisation_paths.iter().map(PathBuf::as_path).collect();
+    let roles = input_path(&rules.abuse_roles);
+    let mailboxes =
+        abuse_mailboxes(&roles, &organisation_refs, &input_path(&rules.aut_nums));
+    log(&format!(
+        "whois abuse: {} organisations, {} asns",
+        mailboxes.organisations.len(),
+        mailboxes.asns.len()
+    ));
+    mailboxes
 }
 
 #[derive(Default)]
@@ -1004,12 +1124,12 @@ fn load_whois(
     routes: &Families<Route>,
     registry: &Families<Registration>,
     rirs: &[String],
+    organisation_abuse: &HashMap<String, String>,
     text: &Text,
 ) -> Whois {
-    let organisation_paths: Vec<_> =
-        rules.organisations.iter().map(|name| input_path(name)).collect();
-    let organisation_refs: Vec<&std::path::Path> =
-        organisation_paths.iter().map(|path| path.as_path()).collect();
+    let organisation_paths = organisation_paths(rules);
+    let organisation_refs: Vec<&Path> =
+        organisation_paths.iter().map(PathBuf::as_path).collect();
     let org_names = organisations(&organisation_refs);
     let url_pattern = Regex::new(&text.patterns().whois_geofeed_url).expect("regex");
     let mut whois = Whois::default();
@@ -1051,7 +1171,11 @@ fn load_whois(
             if wide || routed || delegated != rir || rir.is_none() {
                 return None::<()>;
             }
-            let row = holder_row(&object, org.as_deref(), &org_names, text);
+            let mut row = holder_row(&object, org.as_deref(), &org_names, text);
+            row.operator.abuse_email = org
+                .and_then(|org| organisation_abuse.get(&org))
+                .and_then(|mail| text.mailbox(mail));
+            row.operator.category = holder_category(&row, &rules.categories, text);
             whois.holders.push((row, object.family, object.first, object.last));
             None
         });
@@ -1092,6 +1216,19 @@ fn holder_row(
     let country = country.filter(|code| code.len() == 2 && code != "EU" && code != "ZZ");
     let operator = Operator { company, country, ..Operator::default() };
     NetworkRow { handle, operator, ..NetworkRow::default() }
+}
+
+fn holder_category(
+    row: &NetworkRow,
+    categories: &Categories,
+    text: &Text,
+) -> Option<String> {
+    let names: Vec<String> = [row.operator.company.clone(), row.handle.clone()]
+        .into_iter()
+        .flatten()
+        .collect();
+    domain_category(None, row.operator.abuse_email.as_deref(), categories)
+        .or_else(|| keyword_category(&names, categories, text))
 }
 
 fn prefix_width(family: usize, first: Address, last: Address) -> u32 {
