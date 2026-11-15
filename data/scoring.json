@@ -39,6 +39,13 @@
   "widest_feed_prefix": {"4": 8, "6": 16},
   "risk_cap": 0.99,
   "blocklist": {"minimum_risk": 0.4},
+  "hosting": {
+    "category": "hosting",
+    "neighborhood": {
+      "prefix": {"4": 24, "6": 48},
+      "risk_by_count": [[3, 0.1], [8, 0.2], [16, 0.3]]
+    }
+  },
   "inference": {
     "evidence": "inferred",
     "services": {

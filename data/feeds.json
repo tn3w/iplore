@@ -105,6 +105,8 @@
   {"name": "dshield", "url": "https://www.dshield.org/block.txt", "license": "publisher terms https://www.dshield.org/block.txt", "suffix": 24, "threat": "abuse", "window": 3, "group": "dshield"},
   {"name": "greensnow", "url": "https://blocklist.greensnow.co/greensnow.txt", "license": "publisher terms https://blocklist.greensnow.co/greensnow.txt", "threat": "abuse", "window": 1, "group": "greensnow"},
   {"name": "binary_defense", "url": "https://www.binarydefense.com/banlist.txt", "license": "publisher terms https://www.binarydefense.com/banlist.txt", "threat": "abuse", "window": 1, "group": "binarydefense"},
+  {"name": "rutgers_attackers", "url": "https://report.cs.rutgers.edu/DROP/attackers", "license": "publisher terms https://report.cs.rutgers.edu/DROP/", "threat": "abuse", "window": 7, "group": "rutgers"},
+  {"name": "nubi", "url": "https://www.nubi-network.com/list.txt", "license": "publisher terms https://www.nubi-network.com/", "threat": "abuse", "window": 7, "group": "nubi"},
   {"name": "turris_greylist", "url": "https://view.sentinel.turris.cz/greylist-data/greylist-latest.csv", "license": "publisher terms https://view.sentinel.turris.cz/greylist-data/greylist-latest.csv", "threat": "abuse", "window": 7, "group": "turris"},
   {"name": "botvrij", "url": "https://www.botvrij.eu/data/ioclist.ip-dst.raw", "license": "publisher terms https://www.botvrij.eu/data/ioclist.ip-dst.raw", "threat": "abuse", "window": 30, "quality": "high", "group": "botvrij"},
   {"name": "stopforumspam", "url": "https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt", "license": "publisher terms https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt", "threat": "spam", "window": 90, "quality": "high", "group": "stopforumspam"},

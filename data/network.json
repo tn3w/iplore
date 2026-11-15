@@ -44,7 +44,7 @@
   "minimum_year": 1980,
   "netnames": {
     "cellular": ["gprs", "lte", "umts", "3g", "4g", "5g", "ggsn", "pgw", "apn", "mobile", "mobil",
-      "cellular", "gsm", "epc", "volte", "nbiot", "m2m", "iot"],
+      "cellular", "gsm", "epc", "volte", "nbiot", "m2m", "iot", "detemobil"],
     "residential": ["dsl", "adsl", "vdsl", "xdsl", "ftth", "fttb", "fttx", "fttc", "gpon", "pppoe",
       "bras", "bng", "cable", "docsis", "cmts", "broadband", "residential", "dynamic", "dyn",
       "dialup", "catv", "cgnat", "cgn", "subscribers", "fwa", "wimax", "wisp", "fixed", "hfc",
@@ -54,6 +54,10 @@
       "cloud", "servers", "server"]
   },
   "descr_classes": ["residential", "business", "hosting"],
+  "leases": {
+    "class": "hosting",
+    "geofeeds": ["geofeed.ipxo.com", "interlir.com", "prefixbroker.com"]
+  },
   "categories": {
     "peeringdb": {
       "Cable/DSL/ISP": "residential",
@@ -81,7 +85,8 @@
     "domains": {
       "military": "\\.mil(\\.[a-z]{2})?$",
       "government": "\\.(gov|gob|gouv|govt|go|gv)(\\.[a-z]{2})?$",
-      "education": "\\.(edu|ac|edu\\.[a-z]{2}|ac\\.[a-z]{2})$"
+      "education": "\\.(edu|ac|edu\\.[a-z]{2}|ac\\.[a-z]{2})$",
+      "hosting": "\\.(host|hosting)$"
     },
     "keywords": {
       "education": ["university", "universidad", "universidade", "universite", "universitat",
@@ -95,6 +100,7 @@
         "polizei", "parliament", "senate", "city of", "county of", "state of",
         "department of", "federal", "bundesamt", "landesamt", "court", "tribunal",
         "agency", "administration", "council"],
+      "hosting": ["hosting", "host", "hoster", "webhosting", "datacenter", "data center"],
       "military": ["army", "navy", "air force", "military", "defense", "defence", "armed forces",
         "bundeswehr", "marines"],
       "residential": ["broadband", "cable", "catv", "television", "tv", "cooperativa", "wifi",

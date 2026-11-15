@@ -163,6 +163,8 @@ Feeds (data/feeds.json)
   dshield                                  publisher terms https://www.dshield.org/block.txt
   greensnow                                publisher terms https://blocklist.greensnow.co/greensnow.txt
   binary_defense                           publisher terms https://www.binarydefense.com/banlist.txt
+  rutgers_attackers                        publisher terms https://report.cs.rutgers.edu/DROP/
+  nubi                                     publisher terms https://www.nubi-network.com/
   turris_greylist                          publisher terms https://view.sentinel.turris.cz/greylist-data/greylist-latest.csv
   botvrij                                  publisher terms https://www.botvrij.eu/data/ioclist.ip-dst.raw
   stopforumspam                            publisher terms https://www.stopforumspam.com/downloads/toxic_ip_cidr.txt

@@ -243,6 +243,17 @@ brands, satellite operators) reach every address but carry no address risk. Bloc
 risk ≥ 0.40 outside trusted ranges (service floors make published VPN lists of normal
 quality, proxies and Tor exits qualify; private relays at 0.15 do not).
 
+Neighborhood (`scoring.json` → `hosting`): cloud addresses churn faster than lists follow
+(300 random addresses per provider: under 4% of Hetzner, AWS, GCP, Azure, Linode or OVH
+carried any risk). Inside ASNs of category hosting, a /24 (v4) or /48 (v6) with listed
+addresses (threat claims of one address or one /64) gives its unlisted, service-free
+addresses risk 0.1 from 3, 0.2 from 8, 0.3 from 16 listed units. It stays below the
+blocklist threshold (a 0.45 tier at 24 split dense /24s into ~200k small gaps), never adds to
+network risk, and skips proxies and VPNs, which keep their own floor (a noisy-OR of floor and
+threat risk instead of `max` grew the blocklist 28%, mostly from one 365-day spam report).
+`firehol_proxies` stays low: its 3.4M addresses come mostly from IP2Proxy-derived data
+centre ranges; normal quality on hosting space blocklisted 2M more addresses.
+
 ## Pipeline
 
 ```
@@ -297,20 +308,27 @@ Category per ASN (strongest of `network.json` → `strength` wins):
 2. Tags (bgp.tools `dsl`/`mobile`/`vpsh`/…, risk-db): capabilities, not identity. Once a
    `dsl`/`mobile` tag is present, only eyeball tags count — ISPs carry `vpsh`/`cdn`,
    hosters never carry `dsl`/`mobile` (bgp.tools' `Eyeball` class also fires on VPN
-   hosters, so it does not decide this).
+   hosters, so it does not decide this). An ASN tagged both `dsl` and `mobile` (299 of 384
+   `mobile`: Deutsche Telekom, Virgin Media, Sky UK, Bell, …) is converged and its
+   `mobile` tag is dropped: fixed lines hold most of its addresses, mobile pools come back
+   as cellular range types, and a mobile name still makes it cellular through the eyeball.
 3. Eyeball: APNIC users > 1,000 on a stub ASN, or ≥ 1M on any → residential, or
    cellular when the name says mobile/GPRS/LTE/celular/…; joins the vote.
 4. Silent lists: the strongest of domain (`.gov`, `.edu`, …) or name keywords, eyeball, and
    netname coverage (`netname_categories`, residential only: typed whois ranges cover
    ≥ 50% of the announced space). Residential name keywords (`broadband`, `cable`, `tv`,
    `cooperativa`, `fibra`, `provedor de`, …) were picked by precision against listed ASNs
-   (≥ 85%, base rate 55%); a mobile eyeball still beats a `broadband` name.
+   (≥ 85%, base rate 55%); a mobile eyeball still beats a `broadband` name. Hosting name
+   keywords (`hosting`, `host`, `hoster`, `webhosting`, `datacenter`, `data center`) and
+   `.host`/`.hosting` domains were scored against the `vpsh`/risk-db hosting tags: 64% /
+   81% hosting, ~80% hosting or content (PeeringDB files hosters as Content), base rate 8%.
 
-`builder bench-category` (2026-11-14): name residential 1,785/1,964 (90.9%), netnames
-residential 992/1,163 (85.3%), users residential 79.5%. Rejected: unnamed datacenter lists
+`builder bench-category` (2026-11-15): name residential 1,796/1,954 (91.9%), netnames
+residential 1,043/1,163 (89.7%), users residential 81.3%, name hosting 358/557 (64.3%),
+domain hosting 39/48 (81.2%). Rejected: unnamed datacenter lists
 as ASN coverage (X4BNet, FireHOL, MISP, ipcat, …: 62% at any share, they include whole
 ISP ASNs; still range claims), netname hosting/cellular/business coverage (42% / 34% / 9%),
-hosting name words (PeeringDB and bgp.tools have no hosting class to check them against).
+hosting words `servers` (8%, root servers), `cloud` (52%), `.cloud` (33%), `vps` (43%).
 Not covered: unrouted legacy ARIN blocks whose holder registered no ASN; only ARIN whois
 names them (bulk access refused, RDAP terms forbid harvesting). Linking them to whoever
 routes the holder's other blocks names the upstream ISP, not the holder.
@@ -320,10 +338,14 @@ operator's country; the most-matched code wins (lowest on ties).
 
 Range type (`abuse.user_type`) splits mixed operators the ASN category cannot: RIPE, APNIC
 and AFRINIC inetnum netnames whose tokens hit exactly one `network.json` → `netnames` class
-become weak claims (any named feed wins, narrowest range next), e.g. Orange FR (ASN
-cellular) ADSL pools → residential, KPN/Telefónica DE APN pools → cellular, VodafoneZiggo
-B2B → business. Classes: cellular, residential (incl. fixed wireless), business, hosting.
-A netname without a class falls back to the joined `descr` lines, same rule, limited to
+become weak claims (any named feed wins, narrowest range next), e.g. Telekom DE (ASN
+residential) `DETEMOBIL` pool → cellular, KPN/Telefónica DE APN pools → cellular,
+VodafoneZiggo B2B → business. Classes: cellular, residential (incl. fixed wireless),
+business, hosting. A netname without a class next checks `leases`: a `geofeed` from an
+address-lease broker (IPXO, InterLIR, PrefixBroker: 14.5k RIPE ranges, 5.3M addresses)
+types the range hosting, because lessees are hosters, VPNs and proxy networks even when an
+eyeball ISP announces the block (IPXO space routed by Deutsche Telekom answered cellular).
+A range without either falls back to the joined `descr` lines, same rule, limited to
 `descr_classes` (residential, business, hosting): `BT-ADSL`, `A1 Telekom Austria AG -
 Business Customer`, `Hetzner Online GmbH Datacenter fsn1-dc5`. Cellular stays netname-only,
 descr names companies (`Cellular Solutions Ltd`, `connected by T-Mobile Polska`). Typed
@@ -471,6 +493,12 @@ public and the nested modules are tagged `integrations/v0.1.0` and `integrations
 - Coverage of 2,000 delegated v4 / v6 addresses (2026-11-14, before → after): city
   43.5 → 95.1% / 9.6 → 94.0%, operator company 90.9 → 98.2% / 84.4 → 98.0%, abuse email
   79.0 → 88.4% / 35.9 → 65.0%, category 80.7 → 86.5% / 38.2 → 54.7%; full file +151 KB.
+- Datacenter neighborhood, hosting keywords, lease ranges, converged eyeballs (2026-11-15,
+  same inputs before → after, 200 random v4 addresses per provider, any risk): DigitalOcean
+  45 → 83%, Contabo 4 → 73%, Scaleway 4 → 24%, GCP 1 → 22%, Vultr 2 → 14%, Tencent
+  0 → 14%, Alibaba 2 → 12%, Hetzner 1 → 7%; AWS, Azure, OVH, Linode unchanged (sparse
+  listings or no hosting ASN category). Blocklist 420,298 → 422,031 CIDRs (+0.4%), full file
+  +821 KB; canaries unchanged.
 - Reserved space (127.0.0.1, 10/8, 169.254/16, 100.64/10, 224/4, ::1, fe80::/10,
   fc00::/7, 2002::/16, …) answers nothing.
 - Spot checks: 1.1.1.1 Cloudflare AS13335 anycast; 185.220.101.1 tor_exit_node;

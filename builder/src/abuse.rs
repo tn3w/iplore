@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::feeds::{Claims, Meaning, per_mille};
 use crate::network::Networks;
-use crate::spans::{Address, Families, Span, push_merged, sweep};
+use crate::spans::{Address, Families, Span, bits, push_merged, sweep};
 use crate::text::Text;
 use crate::{load_json, log};
 
@@ -34,6 +34,18 @@ struct Inference {
 }
 
 #[derive(Deserialize)]
+struct Neighborhood {
+    prefix: HashMap<String, u32>,
+    risk_by_count: Vec<(u32, f64)>,
+}
+
+#[derive(Deserialize)]
+struct Hosting {
+    category: String,
+    neighborhood: Neighborhood,
+}
+
+#[derive(Deserialize)]
 struct Scoring {
     freshness: Vec<(u32, f64)>,
     service_risk: HashMap<String, f64>,
@@ -44,7 +56,10 @@ struct Scoring {
     risk_cap: f64,
     blocklist: BlocklistRules,
     inference: Inference,
+    hosting: Hosting,
 }
+
+const NEIGHBORHOOD: &str = "neighborhood";
 
 #[derive(Clone, PartialEq, Eq, Hash, Default, Debug)]
 pub struct Record {
@@ -294,7 +309,52 @@ fn netname_claims(networks: &Networks, meanings: &mut Vec<Meaning>) -> Families<
     })
 }
 
+fn neighborhoods(
+    claims: &Claims,
+    meanings: &mut Vec<Meaning>,
+    scoring: &Scoring,
+) -> Families<u32> {
+    let rules = &scoring.hosting.neighborhood;
+    let mut tiers: Vec<(u32, u32)> = Vec::new();
+    for &(count, risk) in &rules.risk_by_count {
+        meanings.push(Meaning {
+            feed: NEIGHBORHOOD.to_string(),
+            group: NEIGHBORHOOD.to_string(),
+            risk: per_mille(risk),
+            quality: per_mille(1.0),
+            ..Meaning::default()
+        });
+        tiers.push((count, meanings.len() as u32 - 1));
+    }
+    std::array::from_fn(|family_slot| {
+        let family = [4, 6][family_slot];
+        let unit = if family_slot == 0 { 0 } else { scoring.network.v6_unit_bits };
+        let shift = bits(family) - rules.prefix[&family.to_string()];
+        let listed = claims.ranges[family_slot].iter().filter(|span| {
+            let meaning = &claims.meanings[span.value as usize];
+            meaning.risk > 0
+                && !meaning.trusted
+                && span.first >> unit == span.last >> unit
+        });
+        let mut units: Vec<(Address, Address)> =
+            listed.map(|span| (span.first >> shift, span.first >> unit)).collect();
+        units.sort_unstable();
+        units.dedup();
+        let mut counts: BTreeMap<Address, u32> = BTreeMap::new();
+        for (block, _) in units {
+            *counts.entry(block).or_default() += 1;
+        }
+        let blocks = counts.into_iter().filter_map(|(block, count)| {
+            let (_, id) = tiers.iter().rev().find(|(minimum, _)| count >= *minimum)?;
+            let first = block << shift;
+            Some(Span { first, last: first | ((1 << shift) - 1), value: *id })
+        });
+        blocks.collect()
+    })
+}
+
 struct Collector {
+    hosting_rows: HashSet<u32>,
     interner: Interner,
     spans: Families<u32>,
     hosts: [Vec<(Address, u32)>; 2],
@@ -311,17 +371,26 @@ pub fn build(
     let scoring: Scoring = load_json("scoring.json");
     let rater = Rater { scoring: &scoring, flags };
     let (mut meanings, baseline) = baselines(claims, networks, text, &scoring);
+    let nearby = neighborhoods(claims, &mut meanings, &scoring);
     let netnamed = netname_claims(networks, &mut meanings);
+    let hosting = Some(&scoring.hosting.category);
+    let hosting_rows = (0..networks.rows.len() as u32)
+        .filter(|&row| networks.rows[row as usize].operator.category.as_ref() == hosting);
     let mut collector = Collector {
+        hosting_rows: hosting_rows.collect(),
         interner: Interner::default(),
         spans: [Vec::new(), Vec::new()],
         hosts: [Vec::new(), Vec::new()],
         blocklist: [Vec::new(), Vec::new()],
         reported: [HashMap::new(), HashMap::new()],
     };
-    for (family_slot, named) in netnamed.into_iter().enumerate() {
-        let claim_spans: Vec<Span<u32>> =
-            claims.ranges[family_slot].iter().cloned().chain(named).collect();
+    for (family_slot, (named, nearby)) in netnamed.into_iter().zip(nearby).enumerate() {
+        let claim_spans: Vec<Span<u32>> = claims.ranges[family_slot]
+            .iter()
+            .cloned()
+            .chain(named)
+            .chain(nearby)
+            .collect();
         let network_spans = &networks.spans[family_slot];
         let mut ranges: Vec<(Address, Address)> =
             claim_spans.iter().map(|span| (span.first, span.last)).collect();
@@ -391,6 +460,15 @@ impl Collector {
         base: &[Active],
     ) {
         let Segment { family_slot, first, last, network, unit } = *segment;
+        let nearby = |claim: &Active| claim.meaning.feed == NEIGHBORHOOD;
+        let listed = own.iter().any(|claim| {
+            !nearby(claim) && (claim.meaning.risk > 0 || claim.meaning.service.is_some())
+        });
+        let hosting = network.is_some_and(|row| self.hosting_rows.contains(&row));
+        let filled = hosting && !listed && own.iter().any(nearby);
+        let own: Vec<Active> =
+            own.iter().copied().filter(|claim| filled || !nearby(claim)).collect();
+        let own = own.as_slice();
         let host = first == last && own.iter().any(|claim| claim.size == 0);
         let ranged = own.iter().filter(|claim| claim.size > 0 || !host);
         let range_claims: Vec<Active> = ranged.chain(base).copied().collect();
@@ -411,7 +489,7 @@ impl Collector {
         if rater.blocklisted(own, risk) {
             push_merged(&mut self.blocklist[family_slot], first, last, ());
         }
-        if let Some(network) = network.filter(|_| risk > 0.0) {
+        if let Some(network) = network.filter(|_| risk > 0.0 && !filled) {
             let size = ((last - first) as f64 + 1.0) / 2f64.powi(unit as i32);
             *self.reported[family_slot].entry(network).or_default() += risk * size;
         }

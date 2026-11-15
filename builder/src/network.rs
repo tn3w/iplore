@@ -54,6 +54,12 @@ pub struct Reserved {
 }
 
 #[derive(Deserialize)]
+struct Leases {
+    class: String,
+    geofeeds: Vec<String>,
+}
+
+#[derive(Deserialize)]
 pub struct NetworkRules {
     routes: Limits,
     holders: Limits,
@@ -69,6 +75,7 @@ pub struct NetworkRules {
     pub categories: Categories,
     netnames: HashMap<String, Vec<String>>,
     descr_classes: Vec<String>,
+    leases: Leases,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -914,9 +921,13 @@ fn categorize(
         [&categories.eyeball.category, &categories.eyeball.mobile_category]
             .contains(&category)
     };
+    let mobile = &categories.eyeball.mobile_category;
+    let tagged = |category: &String| tags.iter().flatten().any(|tag| tag == category);
     let declared = tags.iter().flatten().any(household);
-    let tags =
-        tags.into_iter().filter(|tag| !declared || tag.as_ref().is_some_and(household));
+    let converged = tagged(&categories.eyeball.category) && tagged(mobile);
+    let kept =
+        |tag: &String| (!declared || household(tag)) && !(converged && tag == mobile);
+    let tags = tags.into_iter().filter(|tag| tag.as_ref().is_some_and(kept));
     let lists: Vec<Option<String>> = primary.into_iter().chain(tags).collect();
     let lists = lists.as_slice();
     let listed = strongest_category(lists, categories);
@@ -1175,12 +1186,13 @@ fn load_whois(
                 let range = (object.family, object.first, object.last);
                 whois.org_ranges.entry(org.clone()).or_default().push(range);
             }
-            if let Some(url) = geofeed_url(&object, &url_pattern)
-                && geofeed_file(&url).exists()
+            let geofeed = geofeed_url(&object, &url_pattern);
+            if let Some(url) = &geofeed
+                && geofeed_file(url).exists()
             {
                 let (family, first, last) = (object.family, object.first, object.last);
                 whois.geofeeds.push(WhoisGeofeed {
-                    url,
+                    url: url.clone(),
                     family,
                     first,
                     last,
@@ -1188,9 +1200,14 @@ fn load_whois(
                 });
             }
             let family_slot = slot(object.family);
+            let leases = &rules.leases;
+            let leased = geofeed.is_some_and(|url| {
+                leases.geofeeds.iter().any(|host| url.contains(host.as_str()))
+            });
             let user = object
                 .get("netname")
                 .and_then(|name| netname_user(name, &rules.netnames))
+                .or_else(|| leased.then(|| leases.class.clone()))
                 .or_else(|| descr_user(&object, rules));
             if let Some(user) = user {
                 let span = Span { first: object.first, last: object.last, value: user };
