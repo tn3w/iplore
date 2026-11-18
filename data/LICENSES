@@ -49,7 +49,6 @@ Sources (data/sources.json)
   whois_ripe_inet6num                      RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
   whois_ripe_organisation                  RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
   whois_ripe_role                          RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
-  whois_ripe_aut_num                       RIPE Database terms https://www.ripe.net/manage-ips-and-asns/db/support/documentation/terms
   whois_apnic_inetnum                      publisher terms https://www.apnic.net/
   whois_apnic_inet6num                     publisher terms https://www.apnic.net/
   whois_apnic_organisation                 publisher terms https://www.apnic.net/

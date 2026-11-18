@@ -88,16 +88,7 @@ pub fn organisations(paths: &[&Path]) -> HashMap<String, String> {
     names
 }
 
-pub struct AbuseMailboxes {
-    pub organisations: HashMap<String, String>,
-    pub asns: HashMap<u32, String>,
-}
-
-pub fn abuse_mailboxes(
-    roles: &Path,
-    organisations: &[&Path],
-    aut_nums: &Path,
-) -> AbuseMailboxes {
+pub fn abuse_mailboxes(roles: &Path, organisations: &[&Path]) -> HashMap<String, String> {
     let mut handles: HashMap<String, String> = HashMap::new();
     blocks(roles, |attributes| {
         if let (Some(handle), Some(mailbox)) =
@@ -118,16 +109,5 @@ pub fn abuse_mailboxes(
             }
         });
     }
-    let mut asns = HashMap::new();
-    blocks(aut_nums, |attributes| {
-        let asn = value(&attributes, "aut-num")
-            .and_then(|asn| asn.trim_start_matches("AS").parse::<u32>().ok());
-        let mailbox = value(&attributes, "abuse-c")
-            .and_then(|handle| handles.get(handle))
-            .or_else(|| by_organisation.get(value(&attributes, "org")?));
-        if let (Some(asn), Some(mailbox)) = (asn, mailbox) {
-            asns.insert(asn, mailbox.clone());
-        }
-    });
-    AbuseMailboxes { organisations: by_organisation, asns }
+    by_organisation
 }

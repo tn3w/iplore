@@ -14,7 +14,7 @@ use crate::spans::{
     slot, sweep,
 };
 use crate::text::{Text, decode_line};
-use crate::whois::{AbuseMailboxes, abuse_mailboxes, organisations, range_objects};
+use crate::whois::{abuse_mailboxes, organisations, range_objects};
 use crate::{load_json, log};
 
 #[derive(Deserialize)]
@@ -67,7 +67,6 @@ pub struct NetworkRules {
     whois: HashMap<String, String>,
     organisations: Vec<String>,
     abuse_roles: String,
-    aut_nums: String,
     lacnic: String,
     rir_names: HashMap<String, String>,
     pub reserved: Reserved,
@@ -427,13 +426,12 @@ struct Sources {
     peeringdb_orgs: HashMap<u64, Value>,
     lacnic_cities: HashMap<u32, String>,
     abuse: HashMap<u32, String>,
-    whois_abuse: HashMap<u32, String>,
     bgptools: HashMap<u32, String>,
     users: HashMap<u32, u64>,
     ipinfo: HashMap<u32, (Option<String>, Option<String>)>,
 }
 
-fn load_sources(rules: &NetworkRules, whois_abuse: HashMap<u32, String>) -> Sources {
+fn load_sources(rules: &NetworkRules) -> Sources {
     let mut sources = Sources {
         asn_names: HashMap::new(),
         as2org: HashMap::new(),
@@ -443,7 +441,6 @@ fn load_sources(rules: &NetworkRules, whois_abuse: HashMap<u32, String>) -> Sour
         peeringdb_orgs: HashMap::new(),
         lacnic_cities: HashMap::new(),
         abuse: HashMap::new(),
-        whois_abuse,
         bgptools: HashMap::new(),
         users: HashMap::new(),
         ipinfo: HashMap::new(),
@@ -719,10 +716,7 @@ fn operator_row(
         website,
         address: (!address.is_empty()).then_some(address),
         country,
-        abuse_email: [sources.abuse.get(&asn), sources.whois_abuse.get(&asn)]
-            .into_iter()
-            .flatten()
-            .find_map(|mail| text.mailbox(mail)),
+        abuse_email: sources.abuse.get(&asn).and_then(|mail| text.mailbox(mail)),
         since: registration.and_then(|registration| registration.year).map(u64::from),
         tier: sources.tiers.get(&asn).copied(),
         cone: sources.asrank.get(&asn).and_then(|rank| rank.0),
@@ -1009,17 +1003,16 @@ pub fn build(text: &Text, claims: &Claims) -> Networks {
     let registry = registry(&rirs, &rules, rules.minimum_year);
     let routes = routes(&rules);
     log(&format!("routes: v4 {} v6 {}", routes[0].len(), routes[1].len()));
-    let mailboxes = load_mailboxes(&rules);
-    let sources = load_sources(&rules, mailboxes.asns);
+    let organisation_abuse = load_mailboxes(&rules);
+    let sources = load_sources(&rules);
     let mut asn_users: HashMap<u32, Vec<String>> = HashMap::new();
     for &(asn, meaning) in &claims.asns {
         if let Some(user) = &claims.meanings[meaning as usize].user {
             asn_users.entry(asn).or_default().push(user.clone());
         }
     }
-    let organisation_abuse = &mailboxes.organisations;
     let whois =
-        load_whois(&rules, &routes, &registry.spans, &rirs, organisation_abuse, text);
+        load_whois(&rules, &routes, &registry.spans, &rirs, &organisation_abuse, text);
     let categories = &rules.categories;
     let covered = covered_categories(&provider_users(claims), &routes, categories);
     let netnames = netname_users(&whois.users, &categories.netname_categories);
@@ -1118,18 +1111,12 @@ fn organisation_paths(rules: &NetworkRules) -> Vec<PathBuf> {
     rules.organisations.iter().map(|name| input_path(name)).collect()
 }
 
-fn load_mailboxes(rules: &NetworkRules) -> AbuseMailboxes {
+fn load_mailboxes(rules: &NetworkRules) -> HashMap<String, String> {
     let organisation_paths = organisation_paths(rules);
     let organisation_refs: Vec<&Path> =
         organisation_paths.iter().map(PathBuf::as_path).collect();
-    let roles = input_path(&rules.abuse_roles);
-    let mailboxes =
-        abuse_mailboxes(&roles, &organisation_refs, &input_path(&rules.aut_nums));
-    log(&format!(
-        "whois abuse: {} organisations, {} asns",
-        mailboxes.organisations.len(),
-        mailboxes.asns.len()
-    ));
+    let mailboxes = abuse_mailboxes(&input_path(&rules.abuse_roles), &organisation_refs);
+    log(&format!("whois abuse: {} organisations", mailboxes.len()));
     mailboxes
 }
 

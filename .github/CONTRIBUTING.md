@@ -290,10 +290,10 @@ keeps NIR pools (one APNIC id holds 5,431 ASNs of IRINN members, others CNNIC, I
 Whois holders get their organisation's RIPE `abuse-c` mailbox and a domain/keyword
 category.
 
-Abuse contact per ASN: asn-abuse, else the RIPE aut-num `abuse-c` (or its organisation's).
-APNIC dumps mask mailboxes (IRT objects too), AFRINIC organisations carry no `abuse-c`
-(IRT `abuse-mailbox` reaches only 63 aut-nums), LACNIC inetnums carry no holder, ARIN has
-no bulk dump.
+Abuse contact per ASN: asn-abuse, which already merges the RIPE aut-num `abuse-c` with
+Abusix. Whois holders keep their RIPE organisation mailbox. APNIC dumps mask mailboxes,
+AFRINIC organisations carry no `abuse-c`, LACNIC inetnums carry no holder, ARIN has no
+bulk dump.
 
 Whois geofeeds: `geofeed:` and `remarks: Geofeed` on RIPE, APNIC, AFRINIC and LACNIC
 inetnums (LACNIC writes short v4 prefixes like `2.152.34/23`, expanded before parsing).
