@@ -237,6 +237,7 @@ Feeds (data/feeds.json)
   shadowwhisperer_dropper                  Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
   shadowwhisperer_recon                    Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
   shadowwhisperer_intrusion                Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
+  tn3w_abuse                               publisher terms https://data.tn3w.dev/
   shadowwhisperer_abuse                    Unlicense https://github.com/ShadowWhisperer/IPs/blob/master/LICENSE
   aws                                      publisher terms https://ip-ranges.amazonaws.com/ip-ranges.json
   gcp                                      publisher terms https://www.gstatic.com/ipranges/cloud.json
