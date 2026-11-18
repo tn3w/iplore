@@ -822,7 +822,9 @@ fn accuracy_floors(
     let mut accuracies: [Vec<u32>; 3] = Default::default();
     for span in spans.iter().flatten() {
         let point = &points[span.value as usize];
-        accuracies[granularity(point)].push(point.accuracy);
+        if point.accuracy > 0 {
+            accuracies[granularity(point)].push(point.accuracy);
+        }
     }
     accuracies.map(|mut values| {
         values.sort_unstable();
@@ -850,12 +852,20 @@ fn decide(geography: &Geography, winner: &Vote, other: Option<&Vote>) -> Point {
     Point {
         lat: (winner.lat * 1e4).round() as i32,
         lon: (winner.lon * 1e4).round() as i32,
-        accuracy: winner.radius.round() as u32,
+        accuracy: disputed_radius(winner, other).round() as u32,
         country: winner.country,
         region: winner.region,
         city: winner.city,
         confidence: confidence(geography, winner, other),
     }
+}
+
+fn disputed_radius(winner: &Vote, other: Option<&Vote>) -> f64 {
+    let Some(other) = other.filter(|other| other.country == winner.country) else {
+        return winner.radius;
+    };
+    let distance = distance_km(winner.lat, winner.lon, other.lat, other.lon);
+    winner.radius.max(distance)
 }
 
 fn lends_city(winner: &Vote, other: &Vote) -> bool {

@@ -13,7 +13,7 @@
     "single_source_country": 55,
     "borrowed_city": 35
   },
-  "accuracy_floor_percentile": 90,
+  "accuracy_floor_percentile": 50,
   "postal_radius_km": 10,
   "holdout_every": 10,
   "region_fixes": {"AZ.35": "AZ-NX"},

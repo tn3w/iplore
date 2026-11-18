@@ -311,6 +311,20 @@ Feeds (data/feeds.json)
   adguard_dns                              publisher documentation https://adguard-dns.io/kb/general/dns-providers/
   mullvad_dns                              publisher documentation https://mullvad.net/en/help/dns-over-https-and-dns-over-tls
   dnssb                                    publisher documentation https://dns.sb/
+  cloudflare_dns                           publisher documentation https://developers.cloudflare.com/1.1.1.1/ip-addresses/
+  cleanbrowsing_dns                        publisher documentation https://cleanbrowsing.org/filters
+  controld_dns                             publisher documentation https://docs.controld.com/docs/free-dns
+  nextdns_anycast                          publisher documentation https://nextdns.io/
+  comodo_dns                               publisher documentation https://www.comodo.com/secure-dns/
+  ultradns                                 publisher documentation https://www.publicdns.neustar/
+  verisign_dns                             publisher documentation https://www.verisign.com/en_US/security-services/public-dns/index.xhtml
+  dnswatch                                 publisher documentation https://dns.watch/
+  level3_dns                               publisher documentation https://www.lumen.com/
+  dns4eu                                   publisher documentation https://www.joindns4.eu/
+  alidns                                   publisher documentation https://www.alidns.com/
+  dnspod                                   publisher documentation https://www.dnspod.cn/products/publicdns
+  dns114                                   publisher documentation https://www.114dns.com/
+  yandex_dns                               publisher documentation https://dns.yandex.com/
   proxifly                                 GPL-3.0 https://github.com/proxifly/free-proxy-list/blob/main/LICENSE
   monosans_http                            MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
   monosans_socks5                          MIT https://github.com/monosans/proxy-list/blob/main/LICENSE
