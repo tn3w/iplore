@@ -1,9 +1,12 @@
 use std::ffi::OsString;
 use std::hint::black_box;
+use std::net::Ipv4Addr;
 use std::path::Path;
 use std::time::Instant;
 
+use reader::rdns::Database;
 use reader::{Error, Reader};
+use serde_json::json;
 
 fn peak_memory_kb() -> u64 {
     let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
@@ -72,6 +75,16 @@ fn print_answer(path: &Path, address: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+fn print_names(path: &Path, address: &str) -> std::io::Result<()> {
+    let Ok(address) = address.parse::<Ipv4Addr>() else {
+        eprintln!("invalid IPv4 address: {address}");
+        std::process::exit(2);
+    };
+    let names = Database::open(path)?.lookup(address).map_err(std::io::Error::other)?;
+    println!("{}", json!({ "ip": address, "ptr": names }));
+    Ok(())
+}
+
 fn main() {
     let arguments: Vec<OsString> = std::env::args_os().skip(1).collect();
     let [path, query] = arguments.as_slice() else {
@@ -79,7 +92,10 @@ fn main() {
         std::process::exit(2);
     };
     let path = Path::new(path);
-    let result = match query.to_string_lossy().as_ref() {
+    let query = query.to_string_lossy();
+    let rdns = path.extension().is_some_and(|extension| extension == "rdns");
+    let result = match query.as_ref() {
+        address if rdns => print_names(path, address),
         "--bench" => benchmark(path),
         "--about" => print_about(path),
         address => print_answer(path, address),

@@ -4,7 +4,9 @@ mod feeds;
 mod fetch;
 mod geo;
 mod network;
+mod rdns;
 mod spans;
+mod template;
 mod text;
 mod whois;
 mod write;
@@ -174,10 +176,11 @@ fn benchmark_categories() -> io::Result<()> {
 fn main() {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let environment = load_environment();
-    let usage = "usage: builder fetch | licenses | bench-place | bench-category \
+    let usage = "usage: builder fetch | rdns | licenses | bench-place | bench-category \
                  | check <a> <b> | <selection>... (full, blocklist, place+metro, ...)";
     let result = match arguments.first().map(String::as_str) {
         Some("fetch") => fetch::run(&environment),
+        Some("rdns") => rdns::run(),
         Some("bench-place") => benchmark_places(),
         Some("bench-category") => benchmark_categories(),
         Some("licenses") => write::write_licenses("data/LICENSES"),

@@ -537,9 +537,13 @@ fn finalize(
 }
 
 fn compress(data: &[u8], settings: [u32; 3], format: &Format) -> Vec<u8> {
-    let mut options = LzmaOptions::new_preset(format.preset).expect("preset");
+    lzma(data, settings, format.preset, format.dictionary)
+}
+
+pub fn lzma(data: &[u8], settings: [u32; 3], preset: u32, dictionary: u32) -> Vec<u8> {
+    let mut options = LzmaOptions::new_preset(preset).expect("preset");
     options
-        .dict_size(format.dictionary)
+        .dict_size(dictionary)
         .literal_context_bits(settings[0])
         .literal_position_bits(settings[1])
         .position_bits(settings[2]);

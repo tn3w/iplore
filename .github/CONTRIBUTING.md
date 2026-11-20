@@ -144,11 +144,13 @@ cargo build --release
 | --- | --- |
 | `builder fetch` | download sources (`sources.json`), feeds (`feeds.json`), whois-referenced geofeeds |
 | `builder <selection>...` | write `dist/iplore-<selection>.ipl`; `blocklist` writes `dist/blocklist.netset` |
+| `builder rdns` | pack `inputs/rdns-v4.tsv.xz` ([`rdns-v4.tsv.xz`](https://github.com/tn3w/opendata/releases/tag/data) from tn3w/opendata, downloaded by the workflow) into `dist/rdns-v4.rdns` |
 | `builder bench-place` | geofeed holdout benchmark (every 10th row held out) |
 | `builder bench-category` | agreement of domain/name/user rules with listed categories |
 | `builder licenses` | regenerate `data/LICENSES` from the `license` of every source and feed |
 | `builder check <a.ipl> <b.ipl>` | union property: common fields answer identically |
 | `iplore <file> <address>` | JSON answer (v4, v6, v4-mapped, `[addr]:port`, `%zone`); exit 2 invalid address, 1 unreadable or corrupt file |
+| `iplore <file>.rdns <ipv4>` | `{"ip": …, "ptr": [...]}` from a reverse DNS file |
 | `iplore <file> --about` | header: fields, vocabularies, tables, sections, sources |
 | `iplore <file> --bench` | open time, cold/warm lookups, peak RSS |
 
@@ -369,6 +371,20 @@ Every value: `0` = null, else `value + 1` (zigzag for signed, `scale`, vocabular
 flag bitmask, link row). Raw LZMA1 blocks, `[lc,lp,pb]` and delta chosen per section by
 sample. Rows ranked by use or natural key. Hosts (single addresses differing from their
 range) are checked before the spine.
+
+### Reverse DNS
+
+A separate file, not an `.ipl` selection:
+
+```
+"RDN1" | block count:u32 LE | per block: first address:u32, end offset:u32 | blocks
+```
+
+Consecutive addresses whose PTR names follow one pattern share a run. The pattern is a
+template: literal bytes plus codes for an octet (plain, `%03`, hex), an affine value of
+the address or its low 24/16/8 bits (decimal or base36, with offset and width). Several
+names join with `0x1f`. A block holds about 1 MiB of runs: count, start gaps, lengths
+(varints), templates split by `0x00`, raw LZMA1 `[4,0,0]` with a 2 MiB dictionary.
 
 ## Integrations
 

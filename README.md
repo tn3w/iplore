@@ -40,6 +40,7 @@ anything else is an invalid address (CLI exit 2).
 | `iplore <file> <address>` | JSON answer |
 | `iplore <file> --about` | fields, vocabularies, sources, licenses |
 | `iplore <file> --bench` | open time, cold and warm lookups, peak memory |
+| `iplore <file>.rdns <ipv4>` | `{"ip": …, "ptr": [...]}` from `rdns-v4.rdns` |
 
 ## Python, JavaScript, edge
 
@@ -75,6 +76,7 @@ Built every Sunday, newest 3 releases kept.
 | `iplore-anonymizer.ipl` | detect VPN, proxy, Tor, private relay | 2.2 MB |
 | `iplore-abuse.ipl` | risk scoring: services, providers, threat risk | 5.2 MB |
 | `blocklist.netset` | web server protection: 420k CIDRs for nginx, ipset, nftables | 7.3 MB |
+| `rdns-v4.rdns` | reverse DNS: every IPv4 PTR record ([tn3w/opendata](https://github.com/tn3w/opendata)) | 254 MB |
 
 Need another cut? `builder abuse.service=tor_exit_node` builds an 11 KB Tor-only file,
 see [CONTRIBUTING](.github/CONTRIBUTING.md).
