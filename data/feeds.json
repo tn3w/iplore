@@ -190,7 +190,7 @@
   {"name": "ibm_cloud", "url": "https://raw.githubusercontent.com/dprosper/cidr-calculator/main/data/datacenters.json", "license": "Apache-2.0 https://github.com/dprosper/cidr-calculator/blob/main/LICENSE", "provider": "IBM Cloud", "user": "hosting"},
   {"name": "linode_v4", "url": "https://raw.githubusercontent.com/lord-alfred/ipranges/main/linode/ipv4.txt", "license": "CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE", "provider": "Akamai Linode", "user": "hosting"},
   {"name": "vultr_v4", "url": "https://raw.githubusercontent.com/lord-alfred/ipranges/main/vultr/ipv4.txt", "license": "CC0-1.0 https://github.com/lord-alfred/ipranges/blob/main/LICENSE", "provider": "Vultr", "user": "hosting"},
-  {"name": "github", "url": "https://api.github.com/meta", "license": "publisher terms https://api.github.com/meta", "provider": "GitHub", "user": "hosting"},
+  {"name": "github", "url": "https://api.github.com/meta", "license": "publisher terms https://api.github.com/meta", "regex": "\"actions\":\\[[^\\]]*\\]|\"([0-9a-f.:]+/\\d+)\"", "provider": "GitHub", "user": "hosting"},
   {"name": "x4bnet_datacenter", "url": "https://raw.githubusercontent.com/X4BNet/lists_vpn/main/output/datacenter/ipv4.txt", "license": "none declared https://github.com/X4BNet/lists_vpn", "user": "hosting", "weak": true},
   {"name": "riskdb_net_hosting", "url": "https://raw.githubusercontent.com/O-X-L/risk-db-lists/refs/heads/main/net/kind_hosting.txt", "license": "BSD-3-Clause https://github.com/O-X-L/risk-db-lists/blob/main/LICENSE", "user": "hosting", "weak": true},
   {"name": "firehol_datacenters", "url": "https://iplists.firehol.org/files/datacenters.netset", "license": "per original list https://iplists.firehol.org/", "user": "hosting", "weak": true},

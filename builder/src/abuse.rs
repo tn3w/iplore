@@ -154,9 +154,10 @@ impl Rater<'_> {
         let service = usable()
             .filter(|claim| claim.meaning.service.is_some())
             .min_by_key(|claim| self.strength(claim));
-        let provider = usable()
-            .filter(|claim| claim.meaning.provider.is_some())
-            .min_by_key(|claim| (self.strength(claim), claim.size));
+        let provider =
+            usable().filter(|claim| claim.meaning.provider.is_some()).min_by_key(
+                |claim| (!claim.meaning.trusted, self.strength(claim), claim.size),
+            );
         let user = claims
             .iter()
             .filter(|claim| !claim.baseline && claim.meaning.user.is_some())
