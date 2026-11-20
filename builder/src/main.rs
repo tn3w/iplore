@@ -3,6 +3,7 @@ mod assemble;
 mod feeds;
 mod fetch;
 mod geo;
+mod mmdb;
 mod network;
 mod rdns;
 mod spans;

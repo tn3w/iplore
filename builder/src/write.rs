@@ -261,10 +261,10 @@ struct Rebuilt {
     old_to_canonical: Vec<u64>,
 }
 
-struct Output {
-    tables: BTreeMap<String, (Vec<String>, Vec<Vec<u64>>)>,
-    keys: BTreeMap<String, Vec<Address>>,
-    strings: Vec<String>,
+pub struct Output {
+    pub tables: BTreeMap<String, (Vec<String>, Vec<Vec<u64>>)>,
+    pub keys: BTreeMap<String, Vec<Address>>,
+    pub strings: Vec<String>,
 }
 
 fn source_name(table: &str, family: Option<usize>) -> String {
@@ -748,6 +748,8 @@ pub fn write(
         )));
     }
     let output = rebuild(dataset, &spec, &plan);
+    let mmdb = path.replace(".ipl", ".mmdb");
+    crate::mmdb::write(&output, &spec.columns, &dataset.vocabularies, selection, &mmdb)?;
     let mut sections: Vec<Section> = Vec::new();
     let mut tables_header = serde_json::Map::new();
     for (name, (columns, rows)) in &output.tables {

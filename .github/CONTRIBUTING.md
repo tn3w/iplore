@@ -127,6 +127,7 @@ characters.
 | `iplore-abuse.ipl` | `abuse.service+abuse.provider+abuse.risk` |
 | `iplore-anonymizer.ipl` | `abuse.service` |
 | `iplore-traffic.ipl` | `network.asn+network.operator.category+abuse.user_type` |
+| `iplore-*.mmdb` | same selections as MaxMind DB |
 | `blocklist.netset` | `blocklist` |
 | `SHA256SUMS` | checksums of all of the above |
 
@@ -373,6 +374,15 @@ Every value: `0` = null, else `value + 1` (zigzag for signed, `scale`, vocabular
 flag bitmask, link row). Raw LZMA1 blocks, `[lc,lp,pb]` and delta chosen per section by
 sample. Rows ranked by use or natural key. Hosts (single addresses differing from their
 range) are checked before the spine.
+
+### MaxMind DB
+
+Each selection is also written as `dist/iplore-<selection>.mmdb` (MaxMind DB 2.0,
+`ip_version` 6, smallest record size of 24/28/32 bits). IPv4 sits at `::/96`, aliased
+from `::ffff:0:0/96`. Records are the `.ipl` answer as nested maps; every table row,
+merged `network` map and record is written once and referenced by pointer, the first
+use of a string inline and later uses by pointer when shorter. Hosts are folded into
+the spine as single-address ranges.
 
 ### Reverse DNS
 

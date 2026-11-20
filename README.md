@@ -66,17 +66,26 @@ Built every Sunday, newest 3 releases kept.
 `releases/latest/download/<file>` always points at the current build. Verify with
 `sha256sum -c SHA256SUMS --ignore-missing` or `gh attestation verify <file> -R tn3w/iplore`.
 
-| file | use case | size |
-| --- | --- | ---: |
-| `iplore-full.ipl` | IP intelligence, everything | 19.8 MB |
-| `iplore-place.ipl` | geolocation, geo-routing, analytics | 6.8 MB |
-| `iplore-country.ipl` | country blocking, compliance, localization | 0.5 MB |
-| `iplore-network.ipl` | ASN and operator lookup, abuse contacts | 6.1 MB |
-| `iplore-traffic.ipl` | bot and fraud triage: ASN, hosting / residential / mobile | 1.8 MB |
-| `iplore-anonymizer.ipl` | detect VPN, proxy, Tor, private relay | 2.2 MB |
-| `iplore-abuse.ipl` | risk scoring: services, providers, threat risk | 5.2 MB |
-| `blocklist.netset` | web server protection: 420k CIDRs for nginx, ipset, nftables | 7.3 MB |
-| `rdns-v4.rdns` | reverse DNS: every IPv4 PTR record ([tn3w/opendata](https://github.com/tn3w/opendata)) | 254 MB |
+| file | use case | `.ipl` | `.mmdb` |
+| --- | --- | ---: | ---: |
+| `iplore-full` | IP intelligence, everything | 19.8 MB | 304 MB |
+| `iplore-place` | geolocation, geo-routing, analytics | 6.8 MB | 67 MB |
+| `iplore-country` | country blocking, compliance, localization | 0.5 MB | 5.6 MB |
+| `iplore-network` | ASN and operator lookup, abuse contacts | 6.1 MB | 42 MB |
+| `iplore-traffic` | bot and fraud triage: ASN, hosting / residential / mobile | 1.8 MB | 28 MB |
+| `iplore-anonymizer` | detect VPN, proxy, Tor, private relay | 2.2 MB | 78 MB |
+| `iplore-abuse` | risk scoring: services, providers, threat risk | 5.2 MB | 165 MB |
+| `blocklist.netset` | web server protection: 420k CIDRs for nginx, ipset, nftables | 7.3 MB | |
+| `rdns-v4.rdns` | reverse DNS: every IPv4 PTR record ([tn3w/opendata](https://github.com/tn3w/opendata)) | 254 MB | |
+
+Every `.ipl` also ships as a MaxMind DB (`.mmdb`, same answer, IPv4 also under
+`::ffff:0:0/96`) for any MaxMind reader: `mmdblookup`, `maxminddb` in Python, Go, Java,
+Rust, nginx `geoip2`, Caddy, Traefik. It is uncompressed for fast random access, hence
+larger.
+
+```python
+maxminddb.open_database("iplore-full.mmdb").get("1.1.1.1")["network"]["asn"]  # 13335
+```
 
 Need another cut? `builder abuse.service=tor_exit_node` builds an 11 KB Tor-only file,
 see [CONTRIBUTING](.github/CONTRIBUTING.md).

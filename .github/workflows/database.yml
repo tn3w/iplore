@@ -53,14 +53,17 @@ jobs:
         run: |
           mkdir release
           cd dist
-          cp iplore-full.ipl iplore-place.ipl iplore-network.ipl blocklist.netset \
-            rdns-v4.rdns ../release/
-          cp iplore-place.country.code.ipl ../release/iplore-country.ipl
-          cp iplore-abuse.service+abuse.provider+abuse.risk.ipl \
-            ../release/iplore-abuse.ipl
-          cp iplore-abuse.service.ipl ../release/iplore-anonymizer.ipl
-          cp iplore-network.asn+network.operator.category+abuse.user_type.ipl \
-            ../release/iplore-traffic.ipl
+          cp blocklist.netset rdns-v4.rdns ../release/
+          for extension in ipl mmdb; do
+            cp iplore-full.$extension iplore-place.$extension iplore-network.$extension \
+              ../release/
+            cp iplore-place.country.code.$extension ../release/iplore-country.$extension
+            cp iplore-abuse.service+abuse.provider+abuse.risk.$extension \
+              ../release/iplore-abuse.$extension
+            cp iplore-abuse.service.$extension ../release/iplore-anonymizer.$extension
+            cp iplore-network.asn+network.operator.category+abuse.user_type.$extension \
+              ../release/iplore-traffic.$extension
+          done
 
       - name: Check union property
         run: |
@@ -128,7 +131,9 @@ jobs:
           PYTHON
 
       - name: Checksums
-        run: cd release && sha256sum iplore-*.ipl rdns-v4.rdns blocklist.netset > SHA256SUMS
+        run: |
+          cd release
+          sha256sum iplore-*.ipl iplore-*.mmdb rdns-v4.rdns blocklist.netset > SHA256SUMS
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
