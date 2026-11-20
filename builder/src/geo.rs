@@ -655,9 +655,12 @@ pub fn resolve(geography: &Geography, text: &Text, geofeeds: &[GeofeedRow]) -> P
     let dbip = dbip_votes(geography, text, &mut interner);
     let count = |source: &VoteSource| source.spans[0].len() + source.spans[1].len();
     log(&format!("place votes: maxmind {} dbip {}", count(&maxmind), count(&dbip)));
+    let arbiter = ipinfo_countries(&mut interner);
     let sources = [&maxmind, &dbip];
-    let mut exact: Families<u32> = [0, 1]
-        .map(|family_slot| vote_family(geography, &mut interner, sources, family_slot));
+    let mut exact: Families<u32> = [0, 1].map(|family_slot| {
+        let arbiter = &arbiter[family_slot];
+        vote_family(geography, &mut interner, sources, arbiter, family_slot)
+    });
     let geofeed_spans = geofeed_points(geography, text, geofeeds, &mut interner);
     for family_slot in 0..2 {
         let mut combined: Vec<Span<(u8, u32)>> = Vec::new();
@@ -683,8 +686,14 @@ pub fn resolve(geography: &Geography, text: &Text, geofeeds: &[GeofeedRow]) -> P
                 let span = &combined[**index];
                 (span.value.0, span.last - span.first)
             };
-            let winner = active.iter().min_by_key(key).expect("active");
-            push_merged(&mut output, first, last, combined[*winner].value.1);
+            let winner = combined[*active.iter().min_by_key(key).expect("active")].value;
+            let point = |id: u32| &interner.points[id as usize];
+            let refined = active.iter().map(|&index| combined[index].value).find(
+                |&(priority, vote)| {
+                    priority == 1 && refines(point(winner.1), point(vote))
+                },
+            );
+            push_merged(&mut output, first, last, refined.unwrap_or(winner).1);
         });
         exact[family_slot] = output;
     }
@@ -721,6 +730,7 @@ fn vote_family(
     geography: &Geography,
     interner: &mut Interner,
     sources: [&VoteSource; 2],
+    arbiter: &[Span<u32>],
     family_slot: usize,
 ) -> Vec<Span<u32>> {
     let layers = sources.map(|source| &source.spans[family_slot]);
@@ -728,21 +738,74 @@ fn vote_family(
         layers[0].iter().map(|span| (0, span.clone())).collect();
     leaders.extend(minus(layers[1], layers[0]).into_iter().map(|span| (1, span)));
     leaders.sort_by_key(|(_, span)| span.first);
-    let mut cursors = [0usize; 2];
+    let mut cursors = [0usize; 3];
     let mut voted = Vec::new();
     for (leader, span) in leaders {
         let follower = 1 - leader;
-        let cursor = &mut cursors[follower];
-        let second = majority(layers[follower], cursor, span.first, span.last);
+        let second =
+            majority(layers[follower], &mut cursors[follower], span.first, span.last);
         let winner = sources[leader].votes[span.value as usize];
         let other = second.map(|vote| sources[follower].votes[vote as usize]);
-        let point = match other.filter(|other| lends_city(&winner, other)) {
-            Some(lender) => borrow_city(geography, &winner, &lender),
-            None => decide(geography, &winner, other.as_ref()),
-        };
-        push_merged(&mut voted, span.first, span.last, interner.point(point));
+        let point = interner.point(combine(geography, &winner, other.as_ref()));
+        let overlapping = layers[follower][cursors[follower]..]
+            .iter()
+            .take_while(|piece| piece.first <= span.last);
+        let mut next = Some(span.first);
+        for piece in overlapping {
+            let (first, last) = (piece.first.max(span.first), piece.last.min(span.last));
+            let challenger = sources[follower].votes[piece.value as usize];
+            let arbiter_country = majority(arbiter, &mut cursors[2], first, last);
+            if !overruled(&winner, &challenger, arbiter_country) {
+                continue;
+            }
+            if let Some(start) = next.filter(|&start| start < first) {
+                push_merged(&mut voted, start, first - 1, point);
+            }
+            let swapped = combine(geography, &challenger, Some(&winner));
+            push_merged(&mut voted, first, last, interner.point(swapped));
+            next = last.checked_add(1);
+        }
+        if let Some(start) = next.filter(|&start| start <= span.last) {
+            push_merged(&mut voted, start, span.last, point);
+        }
     }
     voted
+}
+
+fn combine(geography: &Geography, winner: &Vote, other: Option<&Vote>) -> Point {
+    match other.filter(|other| lends_city(winner, other)) {
+        Some(lender) => borrow_city(geography, winner, lender),
+        None => decide(geography, winner, other),
+    }
+}
+
+fn refines(geofeed: &Point, vote: &Point) -> bool {
+    geofeed.city.is_none()
+        && granularity(vote) < granularity(geofeed)
+        && vote.country == geofeed.country
+        && geofeed.region.is_none_or(|region| vote.region == Some(region))
+}
+
+fn overruled(winner: &Vote, other: &Vote, arbiter_country: Option<u32>) -> bool {
+    winner.country != other.country && arbiter_country == Some(u32::from(other.country))
+}
+
+fn ipinfo_countries(interner: &mut Interner) -> Families<u32> {
+    #[derive(Deserialize)]
+    struct Ipinfo<'a> {
+        #[serde(borrow, default)]
+        country_code: Option<&'a str>,
+    }
+    let mut spans: Families<u32> = [Vec::new(), Vec::new()];
+    walk_mmdb(&input_path("ipinfo_lite"), |family, first, last, result| {
+        let Ok(Some(Ipinfo { country_code: Some(code) })) = result.decode::<Ipinfo>()
+        else {
+            return;
+        };
+        let country = u32::from(interner.country(code));
+        push_merged(&mut spans[slot(family)], first, last, country);
+    });
+    spans
 }
 
 fn majority(

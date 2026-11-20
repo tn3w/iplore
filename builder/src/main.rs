@@ -106,28 +106,68 @@ fn benchmark_places() -> io::Result<()> {
         .partition(|(index, _)| index % every == 0);
     let kept: Vec<geo::GeofeedRow> = kept.into_iter().map(|(_, row)| row).collect();
     let places = geo::resolve(&inputs.geography, &inputs.text, &kept);
-    let mut tally = [[0usize; 2]; 2];
+    let mut tallies: [PlaceTally; 2] = Default::default();
     for (_, row) in held {
         let expected = geo::place_geofeed_row(&inputs.geography, &inputs.text, &row);
         let Some(expected) = expected.and_then(|(city, _)| city) else {
             continue;
         };
         let family_slot = slot(row.family);
-        let point = lookup(&places.exact[family_slot], row.first);
-        let found = point.and_then(|&point| places.points[point as usize].city);
-        tally[family_slot][0] += 1;
-        if found == Some(expected as u32) {
-            tally[family_slot][1] += 1;
-        }
+        let tally = &mut tallies[family_slot];
+        tally.total += 1;
+        let Some(&point) = lookup(&places.exact[family_slot], row.first) else {
+            continue;
+        };
+        let point = &places.points[point as usize];
+        let city = &inputs.geography.cities[expected];
+        let (lat, lon) = (f64::from(point.lat) / 1e4, f64::from(point.lon) / 1e4);
+        let error = geo::distance_km(lat, lon, city.lat, city.lon);
+        tally.answered += 1;
+        tally.cities += usize::from(point.city == Some(expected as u32));
+        tally.countries +=
+            usize::from(places.country_codes[point.country as usize] == city.country);
+        tally.covered += usize::from(error <= f64::from(point.accuracy));
+        tally.errors.push(error);
     }
-    for (family, [total, agreeing]) in [4, 6].iter().zip(tally) {
-        let share = agreeing as f64 * 100.0 / total.max(1) as f64;
-        log(&format!(
-            "held-out geofeed rows v{family}: {agreeing}/{total}, \
-             city agreement {share:.1}%"
-        ));
+    for (family, tally) in [4, 6].iter().zip(tallies) {
+        tally.report(*family);
     }
     Ok(())
+}
+
+#[derive(Default)]
+struct PlaceTally {
+    total: usize,
+    answered: usize,
+    cities: usize,
+    countries: usize,
+    covered: usize,
+    errors: Vec<f64>,
+}
+
+impl PlaceTally {
+    fn report(mut self, family: u8) {
+        let share = |count: usize| count as f64 * 100.0 / self.total.max(1) as f64;
+        self.errors.sort_by(f64::total_cmp);
+        let percentile = |rank: usize| {
+            let index =
+                (self.errors.len() * rank / 100).min(self.errors.len().max(1) - 1);
+            self.errors.get(index).copied().unwrap_or(0.0)
+        };
+        log(&format!(
+            "held-out geofeed rows v{family}: {}/{} answered, city {:.1}%, \
+             country {:.2}%, within accuracy {:.1}%, \
+             error km p50 {:.0} p90 {:.0} p99 {:.0}",
+            self.answered,
+            self.total,
+            share(self.cities),
+            share(self.countries),
+            share(self.covered),
+            percentile(50),
+            percentile(90),
+            percentile(99),
+        ));
+    }
 }
 
 fn benchmark_categories() -> io::Result<()> {

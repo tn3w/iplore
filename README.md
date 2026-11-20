@@ -173,7 +173,7 @@ Open 0.4–3.5 ms, cold lookup 0.2 µs–0.58 ms, peak memory 16–215 MB.
 
 ## Accuracy
 
-- City agreement against held-out operator geofeeds: 81.3% (v4), 82.7% (v6)
+- Against held-out operator geofeeds: city 86.1% (v4), 83.5% (v6); country 97.0%, 97.6%
 - Each answer carries `confidence` and `accuracy`, filter on them
 - `risk` is a signal from 441 feeds weighted by threat, age and quality, not a verdict
 

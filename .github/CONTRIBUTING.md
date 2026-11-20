@@ -145,7 +145,7 @@ cargo build --release
 | `builder fetch` | download sources (`sources.json`), feeds (`feeds.json`), whois-referenced geofeeds |
 | `builder <selection>...` | write `dist/iplore-<selection>.ipl`; `blocklist` writes `dist/blocklist.netset` |
 | `builder rdns` | pack `inputs/rdns-v4.tsv.xz` ([`rdns-v4.tsv.xz`](https://github.com/tn3w/opendata/releases/tag/data) from tn3w/opendata, downloaded by the workflow) into `dist/rdns-v4.rdns` |
-| `builder bench-place` | geofeed holdout benchmark (every 10th row held out) |
+| `builder bench-place` | geofeed holdout benchmark (every 10th row held out): city, country, within `accuracy`, error km p50/p90/p99 |
 | `builder bench-category` | agreement of domain/name/user rules with listed categories |
 | `builder licenses` | regenerate `data/LICENSES` from the `license` of every source and feed |
 | `builder check <a.ipl> <b.ipl>` | union property: common fields answer identically |
@@ -280,8 +280,10 @@ agrees on country and region: MaxMind keeps its radius, confidence drops to
 `borrowed_city` (35; such cities are within 25 km of the geofeed city for 52% of v4 and
 42% of v6 rows).
 MaxMind's city-less coordinates are one fixed point per country (Dublin for all of IE), so
-they are never snapped to a city, and DB-IP never overrides MaxMind's country (it is right
-11–37% of the time when they disagree).
+they are never snapped to a city. DB-IP overrides MaxMind's country only on DB-IP ranges
+where IPinfo Lite names DB-IP's country (alone DB-IP is right 11–37% of the time when they
+disagree). A geofeed row naming only a country or region takes the voted city when it lies
+in that country and region, instead of the largest city.
 
 Network: RouteViews pfx2as (iptoasn fallback), VRPs, NRO registry; unannounced space
 takes, in order, the registry holder's operator, then the widest whois holder. Registry
